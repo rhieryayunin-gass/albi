@@ -15,6 +15,8 @@ import { Mt5Module } from './modules/mt5/mt5.module';
 
 import { EmergencyModule } from './modules/emergency/emergency.module';
 
+import { TradesModule } from './modules/trades/trades.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -28,6 +30,7 @@ import { EmergencyModule } from './modules/emergency/emergency.module';
     RiskEngineModule,
     Mt5Module,
     EmergencyModule,
+    TradesModule,
   ],
 })
 export class AppModule {}
