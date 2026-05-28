@@ -14,7 +14,7 @@ export class WebsocketGateway {
   @WebSocketServer()
   server!: Server;
 
-  emit(event: string, data: unknown) {
+  emit(event: string, data: any) {
     this.server.emit(event, data);
   }
 }
