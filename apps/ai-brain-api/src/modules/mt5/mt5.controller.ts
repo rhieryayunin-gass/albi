@@ -11,13 +11,21 @@ import { Mt5Service } from './mt5.service';
 
 import { WebsocketGateway } from '../websocket/websocket.gateway';
 
+import { ExecutedTradeDto }
+from './dto/executed-trade.dto';
+
+import { TradesRepository }
+from '../trades/trades.repository';
+
 @Controller('mt5')
 export class Mt5Controller {
   constructor(
-    private readonly mt5Service: Mt5Service,
+  private readonly mt5Service: Mt5Service,
 
-    private readonly websocketGateway: WebsocketGateway,
-  ) {}
+  private readonly websocketGateway: WebsocketGateway,
+
+  private readonly tradesRepository: TradesRepository,
+) {}
 
   @Get('heartbeat')
   heartbeat() {
@@ -39,4 +47,38 @@ export class Mt5Controller {
       success: true,
     };
   }
+
+  @Post('executed-trade')
+async executedTrade(
+  @Body() dto: ExecutedTradeDto,
+) {
+  await this.tradesRepository.createTrade({
+    symbol: dto.symbol,
+
+    type: dto.type,
+
+    lot: dto.lot,
+
+    entry_price: dto.entryPrice,
+
+    stop_loss: dto.stopLoss,
+
+    take_profit: dto.takeProfit,
+
+    ticket: dto.ticket,
+
+    status: 'OPEN',
+
+    opened_at: new Date(),
+  });
+
+  this.websocketGateway.emit(
+    'new-trade',
+    dto,
+  );
+
+  return {
+    success: true,
+  };
+}
 }
