@@ -50,9 +50,12 @@ export default function HomePage() {
                   Dashboard
                 </button>
 
-                <button className="hover:text-white transition">
+                <a
+                  href="/trades"
+                  className="hover:text-white transition"
+                  >
                   Trades
-                </button>
+                </a>
 
                 <button className="hover:text-white transition">
                   Risk Engine
