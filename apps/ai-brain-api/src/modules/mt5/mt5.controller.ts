@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 
 import { MarketDataDto } from './dto/market-data.dto';
@@ -17,6 +18,10 @@ from './dto/executed-trade.dto';
 import { TradesRepository }
 from '../trades/trades.repository';
 
+import { Mt5Guard }
+from './mt5.guard';
+
+@UseGuards(Mt5Guard)
 @Controller('mt5')
 export class Mt5Controller {
   constructor(

@@ -1,27 +1,59 @@
 import { Injectable } from '@nestjs/common';
 
+import { RiskEngineService }
+from '../risk-engine/risk-engine.service';
+
 @Injectable()
 export class AiEngineService {
+  constructor(
+    private readonly riskEngineService: RiskEngineService,
+  ) {}
+
   analyzeMarket(data: any) {
-    const random = Math.random();
+    const signal =
+      Math.random() > 0.5
+        ? 'BUY'
+        : 'SELL';
 
-    if (random > 0.7) {
-      return {
-        action: 'BUY',
-        confidence: 92,
-      };
-    }
+    const confidence =
+      Math.floor(
+        80 + Math.random() * 20,
+      );
 
-    if (random < 0.3) {
+    const riskResult =
+      this.riskEngineService.validateTrade(
+        {
+          symbol: data.symbol,
+
+          type: signal,
+
+          lot: 0.01,
+
+          confidence,
+
+          openPositions: 0,
+
+          totalExposure: 0,
+        },
+      );
+
+    if (!riskResult.approved) {
       return {
-        action: 'SELL',
-        confidence: 88,
+        signal: 'NO TRADE',
+
+        reason:
+          riskResult.reason,
+
+        confidence,
       };
     }
 
     return {
-      action: 'WAIT',
-      confidence: 50,
+      signal,
+
+      confidence,
+
+      approved: true,
     };
   }
 }

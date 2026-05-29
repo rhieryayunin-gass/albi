@@ -11,6 +11,9 @@ from '../trades/trades.repository';
 import { SupabaseService }
 from '../../common/supabase/supabase.service';
 
+import { Mt5Guard }
+from './mt5.guard';
+
 @Module({
   imports: [WebsocketModule],
 
@@ -20,6 +23,7 @@ from '../../common/supabase/supabase.service';
   Mt5Service,
   TradesRepository,
   SupabaseService,
+  Mt5Guard,
 ],
 })
 export class Mt5Module {}
