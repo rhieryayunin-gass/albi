@@ -1,37 +1,118 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import {
+  useEffect,
+  useState,
+} from 'react';
 
 import { motion } from 'framer-motion';
 
-import { socket } from '../lib/socket';
+import {
+  AdvancedRealTimeChart,
+} from 'react-ts-tradingview-widgets';
 
 import AuthGuard from '../components/AuthGuard';
 
-import { logout } from '../lib/auth';
+import { socket } from '../lib/socket';
+
+import {
+  AiState,
+  ExposureState,
+} from '../types/ai';
 
 export default function HomePage() {
   const [marketData, setMarketData] =
     useState<any>(null);
 
-  const [
-    emergencyState,
-    setEmergencyState,
-  ] = useState<any>(null);
+  const [exposure, setExposure] =
+    useState<ExposureState | null>(
+      null,
+    );
+
+  const [aiState, setAiState] =
+    useState<AiState | null>(
+      null,
+    );
+
+  const [performance, setPerformance] =
+    useState<any>(null);
+
+  const [emergencyState, setEmergencyState] =
+    useState<any>(null);
+
+  useEffect(() => {
+    loadPerformance();
+
+    loadEmergencyState();
+
+    socket.on(
+      'market-data',
+      (data) => {
+        setMarketData(data);
+      },
+    );
+
+    socket.on(
+      'exposure-update',
+      (data) => {
+        setExposure(data);
+      },
+    );
+
+    return () => {
+      socket.off('market-data');
+
+      socket.off(
+        'exposure-update',
+      );
+    };
+  }, []);
+
+  async function analyzeAi() {
+    if (!marketData) return;
+
+    const response = await fetch(
+      'https://api.albiagent.com/ai-engine/analyze',
+      {
+        method: 'POST',
+
+        headers: {
+          'Content-Type':
+            'application/json',
+        },
+
+        body: JSON.stringify(
+          marketData,
+        ),
+      },
+    );
+
+    const data =
+      await response.json();
+
+    setAiState(data);
+  }
+
+  async function loadPerformance() {
+    const response = await fetch(
+      'https://api.albiagent.com/ai-memory/performance',
+    );
+
+    const data =
+      await response.json();
+
+    setPerformance(data);
+  }
 
   async function loadEmergencyState() {
-    try {
-      const response = await fetch(
-        'https://api.albiagent.com/emergency/state',
-      );
+    const response = await fetch(
+      'https://api.albiagent.com/emergency/state',
+    );
 
-      const data =
-        await response.json();
+    const data =
+      await response.json();
 
-      setEmergencyState(data);
-    } catch (error) {
-      console.error(error);
-    }
+    setEmergencyState(data);
   }
 
   async function freezeTrading() {
@@ -56,83 +137,84 @@ export default function HomePage() {
     loadEmergencyState();
   }
 
-  useEffect(() => {
-    loadEmergencyState();
-
-    socket.on(
-      'market-data',
-      (data) => {
-        console.log(data);
-
-        setMarketData(data);
-      },
-    );
-
-    return () => {
-      socket.off('market-data');
-    };
-  }, []);
-
   return (
     <AuthGuard>
-      <main className="min-h-screen bg-[#0b0b0b] text-white overflow-hidden">
-        {/* Background Glow */}
-        <div className="absolute top-[-200px] left-[-100px] w-[500px] h-[500px] bg-white/5 blur-3xl rounded-full" />
+      <main className="min-h-screen bg-[#050505] text-white overflow-hidden">
+        {/* Background */}
+        <div className="fixed inset-0 overflow-hidden">
+          <div className="absolute top-[-200px] left-[-200px] w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl" />
 
-        <div className="absolute bottom-[-200px] right-[-100px] w-[500px] h-[500px] bg-white/5 blur-3xl rounded-full" />
+          <div className="absolute bottom-[-200px] right-[-200px] w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl" />
+        </div>
 
-        {/* Top Navbar */}
-        <nav className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/10 bg-black/30">
-          <div className="max-w-7xl mx-auto px-8 h-20 flex items-center justify-between">
+        {/* Navbar */}
+        <nav className="relative z-20 border-b border-white/10 backdrop-blur-2xl">
+          <div className="max-w-7xl mx-auto h-20 flex items-center justify-between px-8">
             <div className="flex items-center gap-10">
-              <h1 className="text-2xl font-semibold tracking-tight">
+              <div className="text-2xl font-semibold">
                 ALBI
-              </h1>
+              </div>
 
-              <div className="hidden md:flex items-center gap-8 text-sm text-zinc-400">
-                <button className="hover:text-white transition">
+              <div className="flex gap-8 text-zinc-400">
+                <a href="/">
                   Dashboard
-                </button>
+                </a>
 
-                <a
-                  href="/trades"
-                  className="hover:text-white transition"
-                >
+                <a href="/trades">
                   Trades
                 </a>
 
-                <button className="hover:text-white transition">
-                  Risk Engine
-                </button>
-
-                <button className="hover:text-white transition">
-                  AI Brain
-                </button>
-
-                <button className="hover:text-white transition">
-                  Settings
-                </button>
+                <a href="/ai-memory">
+                  AI Memory
+                </a>
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                logout();
-
-                window.location.href =
-                  '/login';
-              }}
-              className="bg-white text-black px-5 py-2 rounded-full text-sm font-medium hover:scale-105 transition"
-            >
-              Logout
-            </button>
+            <div className="flex items-center gap-4">
+              <div
+                className={`px-4 py-2 rounded-full text-sm ${
+                  emergencyState?.frozen
+                    ? 'bg-red-500/20 text-red-400'
+                    : 'bg-green-500/20 text-green-400'
+                }`}
+              >
+                {emergencyState?.frozen
+                  ? 'FROZEN'
+                  : 'LIVE'}
+              </div>
+            </div>
           </div>
         </nav>
 
         {/* Content */}
-        <section className="relative z-10 max-w-7xl mx-auto px-8 py-12">
-          <div>
-            <motion.h2
+        <section className="relative z-10 max-w-7xl mx-auto px-8 py-10">
+          {/* Top Grid */}
+          <div className="grid grid-cols-4 gap-6">
+            <DashboardCard
+              title="Balance"
+              value={`$${marketData?.balance || 0}`}
+            />
+
+            <DashboardCard
+              title="Equity"
+              value={`$${marketData?.equity || 0}`}
+            />
+
+            <DashboardCard
+              title="Exposure"
+              value={`${exposure?.totalExposure || 0} lot`}
+            />
+
+            <DashboardCard
+              title="Floating PnL"
+              value={`$${exposure?.floatingPnl || 0}`}
+            />
+          </div>
+
+          {/* Chart + AI */}
+          <div className="grid grid-cols-3 gap-6 mt-6">
+            {/* Chart */}
+            <motion.div
               initial={{
                 opacity: 0,
                 y: 20,
@@ -141,224 +223,186 @@ export default function HomePage() {
                 opacity: 1,
                 y: 0,
               }}
-              transition={{
-                duration: 0.6,
-              }}
-              className="text-6xl font-semibold tracking-tight"
+              className="col-span-2 bg-white/[0.03] border border-white/10 rounded-3xl overflow-hidden backdrop-blur-2xl"
             >
-              ALBI AI
-            </motion.h2>
+              <div className="p-6 border-b border-white/10 flex items-center justify-between">
+                <div>
+                  <div className="text-zinc-500 text-sm">
+                    LIVE MARKET
+                  </div>
 
-            <motion.p
+                  <div className="text-2xl font-semibold mt-1">
+                    XAUUSD
+                  </div>
+                </div>
+
+                <button
+                  onClick={analyzeAi}
+                  className="bg-white text-black px-5 py-3 rounded-2xl font-medium"
+                >
+                  Analyze AI
+                </button>
+              </div>
+
+              <div className="h-[600px]">
+                <AdvancedRealTimeChart
+                  theme="dark"
+                  symbol="OANDA:XAUUSD"
+                  autosize
+                />
+              </div>
+            </motion.div>
+
+            {/* AI Panel */}
+            <motion.div
               initial={{
                 opacity: 0,
-                y: 20,
+                x: 20,
               }}
               animate={{
                 opacity: 1,
-                y: 0,
+                x: 0,
               }}
-              transition={{
-                delay: 0.1,
-                duration: 0.6,
-              }}
-              className="text-zinc-500 mt-4 text-lg"
-            >
-              Adaptive autonomous XAUUSD intelligence.
-            </motion.p>
-          </div>
-
-          {/* Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mt-14">
-            <motion.div
-              whileHover={{
-                y: -8,
-                scale: 1.02,
-              }}
-              className="bg-white/[0.03] border border-white/10 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl"
+              className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-2xl"
             >
               <div className="text-zinc-500 text-sm">
-                Symbol
+                AI ORCHESTRATION
               </div>
 
-              <div className="text-4xl font-semibold mt-4 tracking-tight">
-                {marketData?.symbol || '-'}
-              </div>
-            </motion.div>
+              <div className="mt-6 space-y-6">
+                <InfoItem
+                  label="Signal"
+                  value={
+                    aiState?.signal ||
+                    '-'
+                  }
+                />
 
-            <motion.div
-              whileHover={{
-                y: -8,
-                scale: 1.02,
-              }}
-              className="bg-white/[0.03] border border-white/10 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl"
-            >
-              <div className="text-zinc-500 text-sm">
-                Equity
-              </div>
+                <InfoItem
+                  label="Confidence"
+                  value={`${aiState?.confidence || 0}%`}
+                />
 
-              <div className="text-4xl font-semibold mt-4 tracking-tight">
-                $
-                {marketData?.equity || 0}
-              </div>
-            </motion.div>
+                <InfoItem
+                  label="Regime"
+                  value={
+                    aiState?.regime ||
+                    '-'
+                  }
+                />
 
-            <motion.div
-              whileHover={{
-                y: -8,
-                scale: 1.02,
-              }}
-              className="bg-white/[0.03] border border-white/10 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl"
-            >
-              <div className="text-zinc-500 text-sm">
-                Balance
-              </div>
+                <InfoItem
+                  label="Strategy"
+                  value={
+                    aiState?.strategy ||
+                    '-'
+                  }
+                />
 
-              <div className="text-4xl font-semibold mt-4 tracking-tight">
-                $
-                {marketData?.balance || 0}
-              </div>
-            </motion.div>
+                <InfoItem
+                  label="AI Engine"
+                  value={
+                    aiState?.ai_engine ||
+                    '-'
+                  }
+                />
 
-            <motion.div
-              whileHover={{
-                y: -8,
-                scale: 1.02,
-              }}
-              className="bg-white/[0.03] border border-white/10 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl"
-            >
-              <div className="text-zinc-500 text-sm">
-                Spread
+                <InfoItem
+                  label="Status"
+                  value={
+                    aiState?.approved
+                      ? 'APPROVED'
+                      : 'BLOCKED'
+                  }
+                />
               </div>
 
-              <div className="text-4xl font-semibold mt-4 tracking-tight">
-                {marketData?.spread || 0}
-              </div>
-            </motion.div>
-          </div>
-
-          {/* AI Status Panel */}
-          <motion.div
-            initial={{
-              opacity: 0,
-              y: 30,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
-            transition={{
-              delay: 0.2,
-              duration: 0.7,
-            }}
-            className="mt-10 bg-white/[0.03] border border-white/10 rounded-3xl p-8 backdrop-blur-2xl"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-zinc-500 text-sm">
-                  AI STATUS
-                </div>
-
-                <div className="text-3xl font-semibold mt-3">
-                  Adaptive Sniper Aggressive
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
-
-                <div className="text-zinc-400">
-                  LIVE
-                </div>
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6 mt-10">
-              <div className="bg-black/30 rounded-2xl p-6 border border-white/5">
-                <div className="text-zinc-500 text-sm">
-                  Confidence
-                </div>
-
-                <div className="text-3xl font-semibold mt-2">
-                  92%
-                </div>
-              </div>
-
-              <div className="bg-black/30 rounded-2xl p-6 border border-white/5">
-                <div className="text-zinc-500 text-sm">
-                  Risk Mode
-                </div>
-
-                <div className="text-3xl font-semibold mt-2">
-                  Adaptive
-                </div>
-              </div>
-
-              <div className="bg-black/30 rounded-2xl p-6 border border-white/5">
-                <div className="text-zinc-500 text-sm">
-                  Max Exposure
-                </div>
-
-                <div className="text-3xl font-semibold mt-2">
-                  0.5 Lot
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Emergency Engine */}
-          <motion.div
-            initial={{
-              opacity: 0,
-              y: 20,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
-            transition={{
-              delay: 0.3,
-              duration: 0.7,
-            }}
-            className="mt-10 bg-white/[0.03] border border-white/10 rounded-3xl p-8 backdrop-blur-2xl"
-          >
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-              <div>
-                <div className="text-zinc-500 text-sm">
-                  EMERGENCY ENGINE
-                </div>
-
-                <div className="text-4xl font-semibold mt-3">
-                  {emergencyState?.frozen
-                    ? 'FROZEN'
-                    : 'ACTIVE'}
-                </div>
-
-                <div className="text-zinc-500 mt-3">
-                  {emergencyState?.reason ||
-                    'SYSTEM NORMAL'}
-                </div>
-              </div>
-
-              <div className="flex gap-4">
+              {/* Controls */}
+              <div className="mt-10 space-y-4">
                 <button
-                  onClick={freezeTrading}
-                  className="bg-red-500 hover:bg-red-400 transition text-white px-6 py-3 rounded-2xl font-medium"
+                  onClick={
+                    freezeTrading
+                  }
+                  className="w-full bg-red-500 text-white py-4 rounded-2xl font-medium"
                 >
-                  Freeze
+                  Emergency Freeze
                 </button>
 
                 <button
-                  onClick={resumeTrading}
-                  className="bg-green-500 hover:bg-green-400 transition text-white px-6 py-3 rounded-2xl font-medium"
+                  onClick={
+                    resumeTrading
+                  }
+                  className="w-full bg-green-500 text-white py-4 rounded-2xl font-medium"
                 >
-                  Resume
+                  Resume Trading
                 </button>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
+
+          {/* Analytics */}
+          <div className="grid grid-cols-4 gap-6 mt-6">
+            <DashboardCard
+              title="Winrate"
+              value={`${performance?.winrate || 0}%`}
+            />
+
+            <DashboardCard
+              title="Wins"
+              value={`${performance?.wins || 0}`}
+            />
+
+            <DashboardCard
+              title="Losses"
+              value={`${performance?.losses || 0}`}
+            />
+
+            <DashboardCard
+              title="Total Profit"
+              value={`$${performance?.totalProfit || 0}`}
+            />
+          </div>
         </section>
       </main>
     </AuthGuard>
+  );
+}
+
+function DashboardCard({
+  title,
+  value,
+}: any) {
+  return (
+    <motion.div
+      whileHover={{
+        y: -5,
+      }}
+      className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-2xl"
+    >
+      <div className="text-zinc-500 text-sm">
+        {title}
+      </div>
+
+      <div className="text-4xl font-semibold mt-4">
+        {value}
+      </div>
+    </motion.div>
+  );
+}
+
+function InfoItem({
+  label,
+  value,
+}: any) {
+  return (
+    <div>
+      <div className="text-zinc-500 text-sm">
+        {label}
+      </div>
+
+      <div className="text-xl font-semibold mt-2">
+        {value}
+      </div>
+    </div>
   );
 }
