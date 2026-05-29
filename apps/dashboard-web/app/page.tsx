@@ -14,7 +14,51 @@ export default function HomePage() {
   const [marketData, setMarketData] =
     useState<any>(null);
 
+  const [
+    emergencyState,
+    setEmergencyState,
+  ] = useState<any>(null);
+
+  async function loadEmergencyState() {
+    try {
+      const response = await fetch(
+        'https://api.albiagent.com/emergency/state',
+      );
+
+      const data =
+        await response.json();
+
+      setEmergencyState(data);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function freezeTrading() {
+    await fetch(
+      'https://api.albiagent.com/emergency/freeze',
+      {
+        method: 'POST',
+      },
+    );
+
+    loadEmergencyState();
+  }
+
+  async function resumeTrading() {
+    await fetch(
+      'https://api.albiagent.com/emergency/resume',
+      {
+        method: 'POST',
+      },
+    );
+
+    loadEmergencyState();
+  }
+
   useEffect(() => {
+    loadEmergencyState();
+
     socket.on(
       'market-data',
       (data) => {
@@ -53,7 +97,7 @@ export default function HomePage() {
                 <a
                   href="/trades"
                   className="hover:text-white transition"
-                  >
+                >
                   Trades
                 </a>
 
@@ -258,6 +302,58 @@ export default function HomePage() {
                 <div className="text-3xl font-semibold mt-2">
                   0.5 Lot
                 </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Emergency Engine */}
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 20,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              delay: 0.3,
+              duration: 0.7,
+            }}
+            className="mt-10 bg-white/[0.03] border border-white/10 rounded-3xl p-8 backdrop-blur-2xl"
+          >
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+              <div>
+                <div className="text-zinc-500 text-sm">
+                  EMERGENCY ENGINE
+                </div>
+
+                <div className="text-4xl font-semibold mt-3">
+                  {emergencyState?.frozen
+                    ? 'FROZEN'
+                    : 'ACTIVE'}
+                </div>
+
+                <div className="text-zinc-500 mt-3">
+                  {emergencyState?.reason ||
+                    'SYSTEM NORMAL'}
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={freezeTrading}
+                  className="bg-red-500 hover:bg-red-400 transition text-white px-6 py-3 rounded-2xl font-medium"
+                >
+                  Freeze
+                </button>
+
+                <button
+                  onClick={resumeTrading}
+                  className="bg-green-500 hover:bg-green-400 transition text-white px-6 py-3 rounded-2xl font-medium"
+                >
+                  Resume
+                </button>
               </div>
             </div>
           </motion.div>

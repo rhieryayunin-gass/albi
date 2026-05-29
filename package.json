@@ -8,5 +8,9 @@
   },
   "devDependencies": {
     "dotenv-cli": "^11.0.0"
+  },
+  "dependencies": {
+    "@nestjs/axios": "^4.0.1",
+    "axios": "^1.16.1"
   }
 }

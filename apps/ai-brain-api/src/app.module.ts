@@ -17,6 +17,12 @@ import { EmergencyModule } from './modules/emergency/emergency.module';
 
 import { TradesModule } from './modules/trades/trades.module';
 
+import { HttpModule }
+from '@nestjs/axios';
+
+import { AiMemoryModule }
+from './modules/ai-memory/ai-memory.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -31,6 +37,8 @@ import { TradesModule } from './modules/trades/trades.module';
     Mt5Module,
     EmergencyModule,
     TradesModule,
+    HttpModule,
+    AiMemoryModule,
   ],
 })
 export class AppModule {}

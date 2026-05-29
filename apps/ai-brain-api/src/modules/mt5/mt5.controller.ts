@@ -21,6 +21,12 @@ from '../trades/trades.repository';
 import { Mt5Guard }
 from './mt5.guard';
 
+import { ExposureService }
+from '../risk-engine/exposure.service';
+
+import { ExposureUpdateDto }
+from './dto/exposure-update.dto';
+
 @UseGuards(Mt5Guard)
 @Controller('mt5')
 export class Mt5Controller {
@@ -30,6 +36,8 @@ export class Mt5Controller {
   private readonly websocketGateway: WebsocketGateway,
 
   private readonly tradesRepository: TradesRepository,
+
+  private readonly exposureService: ExposureService,
 ) {}
 
   @Get('heartbeat')
@@ -79,6 +87,25 @@ async executedTrade(
 
   this.websocketGateway.emit(
     'new-trade',
+    dto,
+  );
+
+  return {
+    success: true,
+  };
+}
+
+@Post('exposure')
+updateExposure(
+  @Body()
+  dto: ExposureUpdateDto,
+) {
+  this.exposureService.updateState(
+    dto,
+  );
+
+  this.websocketGateway.emit(
+    'exposure-update',
     dto,
   );
 

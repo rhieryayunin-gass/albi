@@ -1,59 +1,203 @@
 import { Injectable } from '@nestjs/common';
 
+import { HttpService }
+from '@nestjs/axios';
+
+import { firstValueFrom }
+from 'rxjs';
+
 import { RiskEngineService }
 from '../risk-engine/risk-engine.service';
+
+import { ExposureService }
+from '../risk-engine/exposure.service';
+
+import { EmergencyService }
+from '../emergency/emergency.service';
+
+import { AiMemoryService }
+from '../ai-memory/ai-memory.service';
 
 @Injectable()
 export class AiEngineService {
   constructor(
+    private readonly httpService: HttpService,
+
     private readonly riskEngineService: RiskEngineService,
+
+    private readonly exposureService: ExposureService,
+
+    private readonly emergencyService: EmergencyService,
+
+    private readonly aiMemoryService: AiMemoryService,
   ) {}
 
-  analyzeMarket(data: any) {
-    const signal =
-      Math.random() > 0.5
-        ? 'BUY'
-        : 'SELL';
+  async analyzeMarket(data: any) {
+    // EMERGENCY CHECK
 
-    const confidence =
-      Math.floor(
-        80 + Math.random() * 20,
+    if (
+      this.emergencyService
+        .getState()
+        .frozen
+    ) {
+      return {
+        signal: 'NO TRADE',
+
+        emergency: true,
+
+        reason:
+          this.emergencyService
+            .getState()
+            .reason,
+      };
+    }
+
+    // FLOATING DD CHECK
+
+    const floatingPnl =
+      this.exposureService
+        .getState()
+        .floatingPnl;
+
+    if (floatingPnl <= -100) {
+      this.emergencyService.freeze(
+        'MAX_FLOATING_DD',
       );
+
+      return {
+        signal: 'NO TRADE',
+
+        emergency: true,
+
+        reason:
+          'MAX_FLOATING_DD',
+      };
+    }
+
+    // PYTHON AI REQUEST
+
+    const response =
+      await firstValueFrom(
+        this.httpService.post(
+          `${process.env.PYTHON_AI_ENGINE_URL}/analyze`,
+          data,
+        ),
+      );
+
+    const ai =
+      response.data;
+
+    // RISK VALIDATION
 
     const riskResult =
       this.riskEngineService.validateTrade(
         {
           symbol: data.symbol,
 
-          type: signal,
+          type: ai.signal,
 
           lot: 0.01,
 
-          confidence,
+          confidence:
+            ai.confidence,
 
-          openPositions: 0,
+          openPositions:
+            this.exposureService
+              .getState()
+              .openPositions,
 
-          totalExposure: 0,
+          totalExposure:
+            this.exposureService
+              .getState()
+              .totalExposure,
         },
       );
 
     if (!riskResult.approved) {
+      await this.aiMemoryService.saveMemory(
+        {
+          symbol: data.symbol,
+
+          signal: 'NO TRADE',
+
+          strategy:
+            ai.strategy,
+
+          regime:
+            ai.regime,
+
+          confidence:
+            ai.confidence,
+
+          approved: false,
+
+          result:
+            riskResult.reason,
+
+          profit: 0,
+        },
+      );
+
       return {
         signal: 'NO TRADE',
 
+        confidence:
+          ai.confidence,
+
+        regime:
+          ai.regime,
+
+        strategy:
+          ai.strategy,
+
+        approved: false,
+
         reason:
           riskResult.reason,
-
-        confidence,
       };
     }
 
-    return {
-      signal,
+    // SAVE MEMORY
 
-      confidence,
+    await this.aiMemoryService.saveMemory(
+      {
+        symbol: data.symbol,
+
+        signal: ai.signal,
+
+        strategy:
+          ai.strategy,
+
+        regime:
+          ai.regime,
+
+        confidence:
+          ai.confidence,
+
+        approved: true,
+
+        result: 'PENDING',
+
+        profit: 0,
+      },
+    );
+
+    return {
+      signal: ai.signal,
+
+      confidence:
+        ai.confidence,
+
+      regime:
+        ai.regime,
+
+      strategy:
+        ai.strategy,
 
       approved: true,
+
+      ai_engine:
+        ai.ai_engine,
     };
   }
 }

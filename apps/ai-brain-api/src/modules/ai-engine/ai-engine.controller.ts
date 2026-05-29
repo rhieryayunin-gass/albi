@@ -4,7 +4,8 @@ import {
   Post,
 } from '@nestjs/common';
 
-import { AiEngineService } from './ai-engine.service';
+import { AiEngineService }
+from './ai-engine.service';
 
 @Controller('ai-engine')
 export class AiEngineController {
@@ -13,8 +14,10 @@ export class AiEngineController {
   ) {}
 
   @Post('analyze')
-  analyze(@Body() body: any) {
-    return this.aiEngineService.analyzeMarket(
+  async analyze(
+    @Body() body: any,
+  ) {
+    return await this.aiEngineService.analyzeMarket(
       body,
     );
   }
