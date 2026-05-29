@@ -8,9 +8,6 @@ import { WebsocketModule } from '../websocket/websocket.module';
 import { TradesRepository }
 from '../trades/trades.repository';
 
-import { SupabaseService }
-from '../../common/supabase/supabase.service';
-
 import { Mt5Guard }
 from './mt5.guard';
 
@@ -25,7 +22,6 @@ from '../risk-engine/exposure.service';
   providers: [
   Mt5Service,
   TradesRepository,
-  SupabaseService,
   Mt5Guard,
   ExposureService,
 ],

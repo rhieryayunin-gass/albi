@@ -1,22 +1,24 @@
 import { Injectable } from '@nestjs/common';
 
-import { SupabaseService }
-from '../../common/supabase/supabase.service';
+import { getSupabaseClient }
+from '../../providers/supabase.provider';
 
 @Injectable()
 export class TradesRepository {
-  constructor(
-    private readonly supabaseService: SupabaseService,
-  ) {}
-
   async createTrade(data: any) {
-    return this.supabaseService.client
+    const supabase =
+      getSupabaseClient();
+
+    return supabase
       .from('trades')
       .insert(data);
   }
 
   async getTrades() {
-    return this.supabaseService.client
+    const supabase =
+      getSupabaseClient();
+
+    return supabase
       .from('trades')
       .select('*')
       .order('opened_at', {
