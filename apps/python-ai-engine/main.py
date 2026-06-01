@@ -759,7 +759,7 @@ def generate_gpt_analysis(
 ):
     try:
         prompt = f"""
-        You are ALBI institutional gold trading AI.
+        You are ALBI, institutional gold trading AI spezialized in XAUUSD.
 
         Analyze XAUUSD market.
 
@@ -789,7 +789,7 @@ def generate_gpt_analysis(
 
         response = (
             client.chat.completions.create(
-                model="gpt-4.1-mini",
+                model="gpt-5-mini",
 
                 messages=[
                     {
@@ -807,6 +807,8 @@ def generate_gpt_analysis(
                 ],
 
                 temperature=0.2,
+
+                max_tokens=500,
             )
         )
 

@@ -33,13 +33,9 @@ import {
   Brain,
   Activity,
   TrendingUp,
-  AlertTriangle,
   DollarSign,
   BarChart3,
   Zap,
-  Globe2,
-  Timer,
-  Radio,
   Target,
 } from 'lucide-react';
 
@@ -153,26 +149,26 @@ export default function HomePage() {
   return (
     <AuthGuard>
 
-      <main className="min-h-screen bg-black text-white overflow-hidden">
+      <main className="min-h-screen bg-[#f5f7fb] text-[#111827] overflow-hidden">
 
         {/* BACKGROUND */}
         <div className="fixed inset-0">
 
-          <div className="absolute top-[-300px] left-[-300px] w-[700px] h-[700px] rounded-full bg-yellow-500/10 blur-3xl" />
+          <div className="absolute top-[-300px] left-[-300px] w-[700px] h-[700px] rounded-full bg-blue-200/30 blur-3xl" />
 
-          <div className="absolute bottom-[-300px] right-[-300px] w-[700px] h-[700px] rounded-full bg-blue-500/10 blur-3xl" />
+          <div className="absolute bottom-[-300px] right-[-300px] w-[700px] h-[700px] rounded-full bg-yellow-200/30 blur-3xl" />
 
         </div>
 
 
         {/* NAVBAR */}
-        <nav className="relative z-20 border-b border-white/10 backdrop-blur-3xl">
+        <nav className="relative z-20 border-b border-zinc-200 bg-white/70 backdrop-blur-3xl">
 
           <div className="max-w-[1800px] mx-auto h-24 flex items-center justify-between px-10">
 
             <div>
 
-              <div className="text-4xl font-black tracking-tight">
+              <div className="text-4xl font-black tracking-tight text-[#111827]">
                 ALBI
               </div>
 
@@ -184,7 +180,7 @@ export default function HomePage() {
 
             <div className="flex items-center gap-4">
 
-              <StatusPill
+              <AnimatedStatus
                 label={
                   emergency?.frozen
                     ? 'FROZEN'
@@ -195,7 +191,7 @@ export default function HomePage() {
                 }
               />
 
-              <StatusPill
+              <AnimatedStatus
                 label={
                   ai?.approved
                     ? 'AI APPROVED'
@@ -258,7 +254,7 @@ export default function HomePage() {
             {/* CHART */}
             <GlassCard className="col-span-2 p-0 overflow-hidden">
 
-              <div className="p-6 border-b border-white/10 flex items-center justify-between">
+              <div className="p-6 border-b border-zinc-200 flex items-center justify-between">
 
                 <div>
 
@@ -292,10 +288,14 @@ export default function HomePage() {
 
               <div className="h-[700px]">
 
+                {/* FIX TV CHART */}
                 <AdvancedRealTimeChart
-                  theme="dark"
+                  theme="light"
                   autosize
                   symbol="OANDA:XAUUSD"
+                  locale="en"
+                  width="100%"
+                  height="700"
                 />
 
               </div>
@@ -374,7 +374,7 @@ export default function HomePage() {
                   GPT INSTITUTIONAL REASONING
                 </div>
 
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-sm leading-7 text-zinc-300">
+                <div className="bg-[#f8fafc] border border-zinc-200 rounded-2xl p-5 text-sm leading-7 text-zinc-700">
                   {ai?.analysis || 'Waiting AI analysis...'}
                 </div>
 
@@ -397,35 +397,12 @@ export default function HomePage() {
 
               <div className="space-y-4 mt-6">
 
-                <Info
-                  label="Spread"
-                  value={market?.spread}
-                />
-
-                <Info
-                  label="ATR"
-                  value={market?.atr}
-                />
-
-                <Info
-                  label="RSI"
-                  value={market?.rsi}
-                />
-
-                <Info
-                  label="EMA20"
-                  value={market?.ema20}
-                />
-
-                <Info
-                  label="EMA50"
-                  value={market?.ema50}
-                />
-
-                <Info
-                  label="EMA200"
-                  value={market?.ema200}
-                />
+                <Info label="Spread" value={market?.spread} />
+                <Info label="ATR" value={market?.atr} />
+                <Info label="RSI" value={market?.rsi} />
+                <Info label="EMA20" value={market?.ema20} />
+                <Info label="EMA50" value={market?.ema50} />
+                <Info label="EMA200" value={market?.ema200} />
 
               </div>
 
@@ -476,36 +453,11 @@ export default function HomePage() {
 
               <div className="space-y-4 mt-6">
 
-                <Info
-                  label="Trades"
-                  value={
-                    performance?.totalTrades
-                  }
-                />
-
-                <Info
-                  label="Wins"
-                  value={
-                    performance?.wins
-                  }
-                />
-
-                <Info
-                  label="Losses"
-                  value={
-                    performance?.losses
-                  }
-                />
-
-                <Info
-                  label="Profit"
-                  value={`$${performance?.totalProfit || 0}`}
-                />
-
-                <Info
-                  label="Max DD"
-                  value={`${performance?.maxDrawdown || 0}`}
-                />
+                <Info label="Trades" value={performance?.totalTrades} />
+                <Info label="Wins" value={performance?.wins} />
+                <Info label="Losses" value={performance?.losses} />
+                <Info label="Profit" value={`$${performance?.totalProfit || 0}`} />
+                <Info label="Max DD" value={`${performance?.maxDrawdown || 0}`} />
 
               </div>
 
@@ -521,35 +473,12 @@ export default function HomePage() {
 
               <div className="space-y-4 mt-6">
 
-                <Info
-                  label="Last Ticket"
-                  value={trade?.ticket}
-                />
-
-                <Info
-                  label="Type"
-                  value={trade?.type}
-                />
-
-                <Info
-                  label="Lot"
-                  value={trade?.lot}
-                />
-
-                <Info
-                  label="Entry"
-                  value={trade?.entryPrice}
-                />
-
-                <Info
-                  label="SL"
-                  value={trade?.stopLoss}
-                />
-
-                <Info
-                  label="TP"
-                  value={trade?.takeProfit}
-                />
+                <Info label="Last Ticket" value={trade?.ticket} />
+                <Info label="Type" value={trade?.type} />
+                <Info label="Lot" value={trade?.lot} />
+                <Info label="Entry" value={trade?.entryPrice} />
+                <Info label="SL" value={trade?.stopLoss} />
+                <Info label="TP" value={trade?.takeProfit} />
 
               </div>
 
@@ -583,12 +512,12 @@ function GlassCard({
       }}
 
       className={`
-      bg-white/[0.03]
+      bg-white/80
       border
-      border-white/10
+      border-zinc-200
       rounded-[32px]
       backdrop-blur-3xl
-      shadow-2xl
+      shadow-[0_10px_40px_rgba(0,0,0,0.06)]
       ${className}
       `}
     >
@@ -668,24 +597,74 @@ function SectionTitle({
 }
 
 
-function StatusPill({
+function AnimatedStatus({
   label,
   active,
 }: any) {
 
   return (
-    <div
+    <motion.div
+
+      animate={{
+        scale: [1, 1.03, 1],
+        opacity: [0.9, 1, 0.9],
+      }}
+
+      transition={{
+        duration: 2,
+        repeat: Infinity,
+      }}
+
       className={`
-      px-5 py-3 rounded-full text-sm font-semibold
+      relative overflow-hidden
+      px-5 py-3 rounded-2xl text-sm font-semibold
+      border shadow-lg
       ${
         active
-          ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-          : 'bg-red-500/20 text-red-400 border border-red-500/30'
+          ? 'bg-green-100 text-green-700 border-green-200'
+          : 'bg-red-100 text-red-700 border-red-200'
       }
       `}
     >
-      {label}
-    </div>
+
+      <div
+        className={`
+        absolute top-0 left-[-100%]
+        w-full h-full
+        ${
+          active
+            ? 'bg-gradient-to-r from-transparent via-white/60 to-transparent'
+            : 'bg-gradient-to-r from-transparent via-red-200/60 to-transparent'
+        }
+        animate-[shine_2s_linear_infinite]
+        `}
+      />
+
+      <div className="relative flex items-center gap-2">
+
+        <motion.div
+          animate={{
+            scale: [1, 1.4, 1],
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+          }}
+          className={`
+          w-2.5 h-2.5 rounded-full
+          ${
+            active
+              ? 'bg-green-500'
+              : 'bg-red-500'
+          }
+          `}
+        />
+
+        {label}
+
+      </div>
+
+    </motion.div>
   );
 }
 
@@ -695,7 +674,7 @@ function MiniBadge({
 }: any) {
 
   return (
-    <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm">
+    <div className="px-4 py-2 rounded-xl bg-[#f5f7fb] border border-zinc-200 text-sm text-zinc-700">
       {label}
     </div>
   );
