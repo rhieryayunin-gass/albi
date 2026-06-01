@@ -5,458 +5,698 @@ import {
   useState,
 } from 'react';
 
-import { motion } from 'framer-motion';
+import {
+  motion,
+} from 'framer-motion';
 
 import {
   AdvancedRealTimeChart,
 } from 'react-ts-tradingview-widgets';
 
-import AuthGuard from '../components/AuthGuard';
+import AuthGuard
+from '../components/AuthGuard';
 
-import { socket } from '../lib/socket';
+import { socket }
+from '../lib/socket';
 
 import {
   AiState,
-  ExposureState,
+  MarketDataState,
+  RiskState,
+  PerformanceState,
+  EmergencyState,
+  TradeExecutionState,
 } from '../types/ai';
 
+import {
+  Shield,
+  Brain,
+  Activity,
+  TrendingUp,
+  AlertTriangle,
+  DollarSign,
+  BarChart3,
+  Zap,
+  Globe2,
+  Timer,
+  Radio,
+  Target,
+} from 'lucide-react';
+
+
 export default function HomePage() {
-  const [marketData, setMarketData] =
-    useState<any>(null);
 
-  const [exposure, setExposure] =
-    useState<ExposureState | null>(
-      null,
-    );
+  const [
+    market,
+    setMarket,
+  ] =
+    useState<
+      MarketDataState | null
+    >(null);
 
-  const [aiState, setAiState] =
-    useState<AiState | null>(
-      null,
-    );
+  const [
+    ai,
+    setAi,
+  ] =
+    useState<
+      AiState | null
+    >(null);
 
-  const [performance, setPerformance] =
-    useState<any>(null);
+  const [
+    risk,
+    setRisk,
+  ] =
+    useState<
+      RiskState | null
+    >(null);
 
-  const [emergencyState, setEmergencyState] =
-    useState<any>(null);
+  const [
+    performance,
+    setPerformance,
+  ] =
+    useState<
+      PerformanceState | null
+    >(null);
+
+  const [
+    emergency,
+    setEmergency,
+  ] =
+    useState<
+      EmergencyState | null
+    >(null);
+
+  const [
+    trade,
+    setTrade,
+  ] =
+    useState<
+      TradeExecutionState | null
+    >(null);
+
+
+  // =====================================
+  // SOCKET
+  // =====================================
 
   useEffect(() => {
-    loadPerformance();
-
-    loadEmergencyState();
 
     socket.on(
       'market-data',
       (data) => {
-        setMarketData(data);
-
-        analyzeAi(data);
+        setMarket(data);
       },
     );
 
     socket.on(
-      'exposure-update',
+      'ai-analysis',
       (data) => {
-        setExposure(data);
+        setAi(data);
+      },
+    );
+
+    socket.on(
+      'risk-analysis',
+      (data) => {
+        setRisk(data);
+      },
+    );
+
+    socket.on(
+      'performance-update',
+      (data) => {
+        setPerformance(data);
+      },
+    );
+
+    socket.on(
+      'trade-execution',
+      (data) => {
+        setTrade(data);
+      },
+    );
+
+    socket.on(
+      'emergency-state',
+      (data) => {
+        setEmergency(data);
       },
     );
 
     return () => {
-      socket.off('market-data');
-
-      socket.off(
-        'exposure-update',
-      );
+      socket.removeAllListeners();
     };
+
   }, []);
 
-  async function analyzeAi(
-    liveData?: any,
-  ) {
-    try {
-      const payload =
-        liveData || marketData;
-
-      if (!payload) return;
-
-      const response = await fetch(
-        'https://api.albiagent.com/ai-engine/analyze',
-        {
-          method: 'POST',
-
-          headers: {
-            'Content-Type':
-              'application/json',
-          },
-
-          body: JSON.stringify({
-            symbol:
-              payload.symbol,
-
-            bid: payload.bid,
-
-            ask: payload.ask,
-
-            spread:
-              payload.spread,
-
-            balance:
-              payload.balance,
-
-            equity:
-              payload.equity,
-          }),
-        },
-      );
-
-      const data =
-        await response.json();
-
-      console.log(
-        'AI RESPONSE',
-        data,
-      );
-
-      setAiState(data);
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
-  async function loadPerformance() {
-    try {
-      const response =
-        await fetch(
-          'https://api.albiagent.com/ai-memory/performance',
-        );
-
-      const data =
-        await response.json();
-
-      console.log(
-        'PERFORMANCE',
-        data,
-      );
-
-      setPerformance(data);
-    } catch (err) {
-      console.log(err);
-
-      setPerformance({
-        winrate: 0,
-        wins: 0,
-        losses: 0,
-        totalProfit: 0,
-      });
-    }
-  }
-
-  async function loadEmergencyState() {
-    try {
-      const response =
-        await fetch(
-          'https://api.albiagent.com/emergency/state',
-        );
-
-      const data =
-        await response.json();
-
-      setEmergencyState(data);
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
-  async function freezeTrading() {
-    await fetch(
-      'https://api.albiagent.com/emergency/freeze',
-      {
-        method: 'POST',
-      },
-    );
-
-    loadEmergencyState();
-  }
-
-  async function resumeTrading() {
-    await fetch(
-      'https://api.albiagent.com/emergency/resume',
-      {
-        method: 'POST',
-      },
-    );
-
-    loadEmergencyState();
-  }
 
   return (
     <AuthGuard>
-      <main className="min-h-screen bg-[#050505] text-white overflow-hidden">
-        {/* Background */}
-        <div className="fixed inset-0 overflow-hidden">
-          <div className="absolute top-[-200px] left-[-200px] w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl" />
 
-          <div className="absolute bottom-[-200px] right-[-200px] w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl" />
+      <main className="min-h-screen bg-black text-white overflow-hidden">
+
+        {/* BACKGROUND */}
+        <div className="fixed inset-0">
+
+          <div className="absolute top-[-300px] left-[-300px] w-[700px] h-[700px] rounded-full bg-yellow-500/10 blur-3xl" />
+
+          <div className="absolute bottom-[-300px] right-[-300px] w-[700px] h-[700px] rounded-full bg-blue-500/10 blur-3xl" />
+
         </div>
 
-        {/* Navbar */}
-        <nav className="relative z-20 border-b border-white/10 backdrop-blur-2xl">
-          <div className="max-w-7xl mx-auto h-20 flex items-center justify-between px-8">
-            <div className="flex items-center gap-10">
-              <div className="text-2xl font-semibold">
+
+        {/* NAVBAR */}
+        <nav className="relative z-20 border-b border-white/10 backdrop-blur-3xl">
+
+          <div className="max-w-[1800px] mx-auto h-24 flex items-center justify-between px-10">
+
+            <div>
+
+              <div className="text-4xl font-black tracking-tight">
                 ALBI
               </div>
 
-              <div className="flex gap-8 text-zinc-400">
-                <a href="/">
-                  Dashboard
-                </a>
-
-                <a href="/trades">
-                  Trades
-                </a>
-
-                <a href="/ai-memory">
-                  AI Memory
-                </a>
+              <div className="text-zinc-500 text-sm mt-1">
+                Autonomous Institutional Gold Intelligence
               </div>
+
             </div>
 
             <div className="flex items-center gap-4">
-              <div
-                className={`px-4 py-2 rounded-full text-sm ${
-                  emergencyState?.frozen
-                    ? 'bg-red-500/20 text-red-400'
-                    : 'bg-green-500/20 text-green-400'
-                }`}
-              >
-                {emergencyState?.frozen
-                  ? 'FROZEN'
-                  : 'LIVE'}
-              </div>
+
+              <StatusPill
+                label={
+                  emergency?.frozen
+                    ? 'FROZEN'
+                    : 'LIVE'
+                }
+                active={
+                  !emergency?.frozen
+                }
+              />
+
+              <StatusPill
+                label={
+                  ai?.approved
+                    ? 'AI APPROVED'
+                    : 'AI BLOCKED'
+                }
+                active={
+                  ai?.approved
+                }
+              />
+
             </div>
+
           </div>
+
         </nav>
 
-        {/* Content */}
-        <section className="relative z-10 max-w-7xl mx-auto px-8 py-10">
-          {/* Top Grid */}
-          <div className="grid grid-cols-4 gap-6">
-            <DashboardCard
+
+        {/* CONTENT */}
+        <section className="relative z-10 max-w-[1800px] mx-auto p-10">
+
+          {/* HERO GRID */}
+          <div className="grid grid-cols-5 gap-6">
+
+            <MetricCard
               title="Balance"
-              value={`$${marketData?.balance || 0}`}
+              value={`$${market?.balance?.toFixed(2) || '0'}`}
+              icon={<DollarSign size={22} />}
             />
 
-            <DashboardCard
+            <MetricCard
               title="Equity"
-              value={`$${marketData?.equity || 0}`}
+              value={`$${market?.equity?.toFixed(2) || '0'}`}
+              icon={<TrendingUp size={22} />}
             />
 
-            <DashboardCard
-              title="Exposure"
-              value={`${exposure?.totalExposure || 0} lot`}
+            <MetricCard
+              title="Confidence"
+              value={`${ai?.confidence || 0}%`}
+              icon={<Brain size={22} />}
             />
 
-            <DashboardCard
-              title="Floating PnL"
-              value={`$${exposure?.floatingPnl || 0}`}
+            <MetricCard
+              title="Risk Score"
+              value={`${risk?.score || 0}`}
+              icon={<Shield size={22} />}
             />
+
+            <MetricCard
+              title="Winrate"
+              value={`${performance?.winrate || 0}%`}
+              icon={<Target size={22} />}
+            />
+
           </div>
 
-          {/* Chart + AI */}
+
+          {/* CHART + AI */}
           <div className="grid grid-cols-3 gap-6 mt-6">
-            {/* Chart */}
-            <motion.div
-              initial={{
-                opacity: 0,
-                y: 20,
-              }}
-              animate={{
-                opacity: 1,
-                y: 0,
-              }}
-              className="col-span-2 bg-white/[0.03] border border-white/10 rounded-3xl overflow-hidden backdrop-blur-2xl"
-            >
+
+            {/* CHART */}
+            <GlassCard className="col-span-2 p-0 overflow-hidden">
+
               <div className="p-6 border-b border-white/10 flex items-center justify-between">
+
                 <div>
+
                   <div className="text-zinc-500 text-sm">
                     LIVE MARKET
                   </div>
 
-                  <div className="text-2xl font-semibold mt-1">
-                    XAUUSD
+                  <div className="text-3xl font-bold mt-1">
+                    {market?.symbol || 'XAUUSD'}
                   </div>
+
                 </div>
 
-                <button
-                  onClick={() =>
-                    analyzeAi()
-                  }
-                  className="bg-white text-black px-5 py-3 rounded-2xl font-medium"
-                >
-                  Analyze AI
-                </button>
+                <div className="flex items-center gap-3">
+
+                  <MiniBadge
+                    label={
+                      market?.session || '-'
+                    }
+                  />
+
+                  <MiniBadge
+                    label={
+                      market?.trend || '-'
+                    }
+                  />
+
+                </div>
+
               </div>
 
-              <div className="h-[600px]">
+              <div className="h-[700px]">
+
                 <AdvancedRealTimeChart
                   theme="dark"
-                  symbol="OANDA:XAUUSD"
                   autosize
+                  symbol="OANDA:XAUUSD"
                 />
-              </div>
-            </motion.div>
 
-            {/* AI Panel */}
-            <motion.div
-              initial={{
-                opacity: 0,
-                x: 20,
-              }}
-              animate={{
-                opacity: 1,
-                x: 0,
-              }}
-              className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-2xl"
-            >
-              <div className="text-zinc-500 text-sm">
-                AI ORCHESTRATION
               </div>
 
-              <div className="mt-6 space-y-6">
-                <InfoItem
-                  label="Signal"
-                  value={
-                    aiState?.signal ||
-                    'WAITING'
-                  }
-                />
+            </GlassCard>
 
-                <InfoItem
-                  label="Confidence"
-                  value={`${aiState?.confidence || 0}%`}
-                />
 
-                <InfoItem
+            {/* AI PANEL */}
+            <GlassCard className="p-7">
+
+              <div className="flex items-center gap-3">
+
+                <Brain />
+
+                <div>
+
+                  <div className="text-zinc-500 text-sm">
+                    AI ORCHESTRATION
+                  </div>
+
+                  <div className="text-2xl font-bold mt-1">
+                    {ai?.signal || 'NO SIGNAL'}
+                  </div>
+
+                </div>
+
+              </div>
+
+              <div className="space-y-5 mt-8">
+
+                <Info
                   label="Regime"
-                  value={
-                    aiState?.regime ||
-                    'UNKNOWN'
-                  }
+                  value={ai?.regime}
                 />
 
-                <InfoItem
+                <Info
                   label="Strategy"
-                  value={
-                    aiState?.strategy ||
-                    'UNKNOWN'
-                  }
+                  value={ai?.strategy}
                 />
 
-                <InfoItem
-                  label="AI Engine"
-                  value={
-                    aiState?.ai_engine ||
-                    'PYTHON'
-                  }
+                <Info
+                  label="Macro Bias"
+                  value={ai?.macro_bias}
                 />
 
-                <InfoItem
-                  label="Status"
-                  value={
-                    aiState?.approved
-                      ? 'APPROVED'
-                      : 'BLOCKED'
-                  }
+                <Info
+                  label="Best Strategy"
+                  value={ai?.best_strategy}
                 />
+
+                <Info
+                  label="Expected PnL"
+                  value={`$${ai?.expected_pnl || 0}`}
+                />
+
+                <Info
+                  label="Expected Winrate"
+                  value={`${ai?.expected_winrate || 0}%`}
+                />
+
+                <Info
+                  label="Expected DD"
+                  value={`${ai?.expected_drawdown || 0}`}
+                />
+
+                <Info
+                  label="Risk Level"
+                  value={risk?.riskLevel}
+                />
+
               </div>
 
-              {/* Controls */}
-              <div className="mt-10 space-y-4">
-                <button
-                  onClick={
-                    freezeTrading
-                  }
-                  className="w-full bg-red-500 text-white py-4 rounded-2xl font-medium"
-                >
-                  Emergency Freeze
-                </button>
+              <div className="mt-8">
 
-                <button
-                  onClick={
-                    resumeTrading
-                  }
-                  className="w-full bg-green-500 text-white py-4 rounded-2xl font-medium"
-                >
-                  Resume Trading
-                </button>
+                <div className="text-zinc-500 text-sm mb-3">
+                  GPT INSTITUTIONAL REASONING
+                </div>
+
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-sm leading-7 text-zinc-300">
+                  {ai?.analysis || 'Waiting AI analysis...'}
+                </div>
+
               </div>
-            </motion.div>
+
+            </GlassCard>
+
           </div>
 
-          {/* Analytics */}
+
+          {/* ANALYTICS */}
           <div className="grid grid-cols-4 gap-6 mt-6">
-            <DashboardCard
-              title="Winrate"
-              value={`${performance?.winrate || 0}%`}
-            />
 
-            <DashboardCard
-              title="Wins"
-              value={`${performance?.wins || 0}`}
-            />
+            <GlassCard className="p-6">
 
-            <DashboardCard
-              title="Losses"
-              value={`${performance?.losses || 0}`}
-            />
+              <SectionTitle
+                title="MARKET"
+                icon={<Activity size={18} />}
+              />
 
-            <DashboardCard
-              title="Total Profit"
-              value={`$${performance?.totalProfit || 0}`}
-            />
+              <div className="space-y-4 mt-6">
+
+                <Info
+                  label="Spread"
+                  value={market?.spread}
+                />
+
+                <Info
+                  label="ATR"
+                  value={market?.atr}
+                />
+
+                <Info
+                  label="RSI"
+                  value={market?.rsi}
+                />
+
+                <Info
+                  label="EMA20"
+                  value={market?.ema20}
+                />
+
+                <Info
+                  label="EMA50"
+                  value={market?.ema50}
+                />
+
+                <Info
+                  label="EMA200"
+                  value={market?.ema200}
+                />
+
+              </div>
+
+            </GlassCard>
+
+
+            <GlassCard className="p-6">
+
+              <SectionTitle
+                title="RISK ENGINE"
+                icon={<Shield size={18} />}
+              />
+
+              <div className="space-y-4 mt-6">
+
+                <Info
+                  label="Approval"
+                  value={
+                    risk?.approved
+                      ? 'APPROVED'
+                      : 'REJECTED'
+                  }
+                />
+
+                <Info
+                  label="Reason"
+                  value={risk?.reason}
+                />
+
+                <Info
+                  label="Warnings"
+                  value={
+                    risk?.warnings?.join(', ')
+                  }
+                />
+
+              </div>
+
+            </GlassCard>
+
+
+            <GlassCard className="p-6">
+
+              <SectionTitle
+                title="PERFORMANCE"
+                icon={<BarChart3 size={18} />}
+              />
+
+              <div className="space-y-4 mt-6">
+
+                <Info
+                  label="Trades"
+                  value={
+                    performance?.totalTrades
+                  }
+                />
+
+                <Info
+                  label="Wins"
+                  value={
+                    performance?.wins
+                  }
+                />
+
+                <Info
+                  label="Losses"
+                  value={
+                    performance?.losses
+                  }
+                />
+
+                <Info
+                  label="Profit"
+                  value={`$${performance?.totalProfit || 0}`}
+                />
+
+                <Info
+                  label="Max DD"
+                  value={`${performance?.maxDrawdown || 0}`}
+                />
+
+              </div>
+
+            </GlassCard>
+
+
+            <GlassCard className="p-6">
+
+              <SectionTitle
+                title="EXECUTION"
+                icon={<Zap size={18} />}
+              />
+
+              <div className="space-y-4 mt-6">
+
+                <Info
+                  label="Last Ticket"
+                  value={trade?.ticket}
+                />
+
+                <Info
+                  label="Type"
+                  value={trade?.type}
+                />
+
+                <Info
+                  label="Lot"
+                  value={trade?.lot}
+                />
+
+                <Info
+                  label="Entry"
+                  value={trade?.entryPrice}
+                />
+
+                <Info
+                  label="SL"
+                  value={trade?.stopLoss}
+                />
+
+                <Info
+                  label="TP"
+                  value={trade?.takeProfit}
+                />
+
+              </div>
+
+            </GlassCard>
+
           </div>
+
         </section>
+
       </main>
+
     </AuthGuard>
   );
 }
 
-function DashboardCard({
-  title,
-  value,
+
+// =========================================
+// COMPONENTS
+// =========================================
+
+function GlassCard({
+  children,
+  className,
 }: any) {
+
   return (
     <motion.div
-      whileHover={{
-        y: -5,
-      }}
-      className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-2xl"
-    >
-      <div className="text-zinc-500 text-sm">
-        {title}
-      </div>
 
-      <div className="text-4xl font-semibold mt-4">
-        {value}
-      </div>
+      whileHover={{
+        y: -4,
+      }}
+
+      className={`
+      bg-white/[0.03]
+      border
+      border-white/10
+      rounded-[32px]
+      backdrop-blur-3xl
+      shadow-2xl
+      ${className}
+      `}
+    >
+      {children}
     </motion.div>
   );
 }
 
-function InfoItem({
+
+function MetricCard({
+  title,
+  value,
+  icon,
+}: any) {
+
+  return (
+    <GlassCard className="p-6">
+
+      <div className="flex items-center justify-between">
+
+        <div className="text-zinc-500 text-sm">
+          {title}
+        </div>
+
+        <div className="text-zinc-400">
+          {icon}
+        </div>
+
+      </div>
+
+      <div className="text-4xl font-black mt-5 tracking-tight">
+        {value}
+      </div>
+
+    </GlassCard>
+  );
+}
+
+
+function Info({
   label,
   value,
 }: any) {
+
   return (
     <div>
-      <div className="text-zinc-500 text-sm">
+
+      <div className="text-zinc-500 text-xs uppercase tracking-wider">
         {label}
       </div>
 
-      <div className="text-xl font-semibold mt-2">
-        {value}
+      <div className="text-lg font-semibold mt-1 break-words">
+        {value || '-'}
       </div>
+
+    </div>
+  );
+}
+
+
+function SectionTitle({
+  title,
+  icon,
+}: any) {
+
+  return (
+    <div className="flex items-center gap-2">
+
+      {icon}
+
+      <div className="font-bold tracking-wide">
+        {title}
+      </div>
+
+    </div>
+  );
+}
+
+
+function StatusPill({
+  label,
+  active,
+}: any) {
+
+  return (
+    <div
+      className={`
+      px-5 py-3 rounded-full text-sm font-semibold
+      ${
+        active
+          ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+          : 'bg-red-500/20 text-red-400 border border-red-500/30'
+      }
+      `}
+    >
+      {label}
+    </div>
+  );
+}
+
+
+function MiniBadge({
+  label,
+}: any) {
+
+  return (
+    <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm">
+      {label}
     </div>
   );
 }

@@ -1,4 +1,73 @@
+export interface Candle {
+  open: number;
+
+  high: number;
+
+  low: number;
+
+  close: number;
+
+  volume: number;
+}
+
+
+export interface Position {
+  ticket: number;
+
+  type: string;
+
+  profit: number;
+
+  volume: number;
+
+  entry: number;
+}
+
+
+// ========================================
+// MARKET DATA
+// ========================================
+
+export interface MarketDataState {
+
+  symbol: string;
+
+  bid: number;
+
+  ask: number;
+
+  spread: number;
+
+  balance: number;
+
+  equity: number;
+
+  atr: number;
+
+  rsi: number;
+
+  ema20: number;
+
+  ema50: number;
+
+  ema200: number;
+
+  trend: string;
+
+  session: string;
+
+  positions: Position[];
+
+  timestamp: string;
+}
+
+
+// ========================================
+// AI ANALYSIS
+// ========================================
+
 export interface AiState {
+
   signal: string;
 
   confidence: number;
@@ -9,15 +78,111 @@ export interface AiState {
 
   approved: boolean;
 
+  reason: string | null;
+
+  analysis: string;
+
+  macro_bias: string;
+
+  expected_pnl: number;
+
+  expected_winrate: number;
+
+  expected_drawdown: number;
+
+  best_strategy: string;
+
   ai_engine: string;
+
+  session: string;
+
+  trend: string;
+
+  atr: number;
+
+  rsi: number;
+
+  spread: number;
+
+  timestamp: string;
 }
 
-export interface ExposureState {
-  openPositions: number;
 
-  totalExposure: number;
+// ========================================
+// RISK ENGINE
+// ========================================
 
-  floatingPnl: number;
+export interface RiskState {
 
-  activeSymbols: string[];
+  approved: boolean;
+
+  score: number;
+
+  riskLevel: string;
+
+  warnings: string[];
+
+  reason: string | null;
+
+  timestamp: string;
+}
+
+
+// ========================================
+// PERFORMANCE
+// ========================================
+
+export interface PerformanceState {
+
+  totalTrades: number;
+
+  wins: number;
+
+  losses: number;
+
+  totalProfit: number;
+
+  maxDrawdown: number;
+
+  winrate: number;
+
+  timestamp: string;
+}
+
+
+// ========================================
+// EMERGENCY
+// ========================================
+
+export interface EmergencyState {
+
+  frozen: boolean;
+
+  reason: string | null;
+
+  timestamp: string;
+}
+
+
+// ========================================
+// TRADE EXECUTION
+// ========================================
+
+export interface TradeExecutionState {
+
+  ticket: number;
+
+  symbol: string;
+
+  type: string;
+
+  lot: number;
+
+  entryPrice: number;
+
+  stopLoss: number;
+
+  takeProfit: number;
+
+  timestamp: string;
 }

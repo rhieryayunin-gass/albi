@@ -6,12 +6,15 @@ from './ai-memory.controller';
 import { AiMemoryService }
 from './ai-memory.service';
 
+import { SupabaseService }
+from '../../common/supabase/supabase.service';
+
 @Module({
   controllers: [
     AiMemoryController,
   ],
 
-  providers: [AiMemoryService],
+  providers: [AiMemoryService, SupabaseService],
 
   exports: [AiMemoryService],
 })

@@ -1,116 +1,105 @@
 import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  UseGuards,
+  Injectable,
 } from '@nestjs/common';
 
-import { MarketDataDto } from './dto/market-data.dto';
-
-import { Mt5Service } from './mt5.service';
-
-import { WebsocketGateway } from '../websocket/websocket.gateway';
-
-import { ExecutedTradeDto }
-from './dto/executed-trade.dto';
+import { WebsocketGateway }
+from '../websocket/websocket.gateway';
 
 import { TradesRepository }
 from '../trades/trades.repository';
 
-import { Mt5Guard }
-from './mt5.guard';
+import { AnalyzeDto }
+from '../ai-engine/dto/analyze.dto';
 
-import { ExposureService }
-from '../risk-engine/exposure.service';
 
-import { ExposureUpdateDto }
-from './dto/exposure-update.dto';
+@Injectable()
+export class Mt5Service {
 
-@UseGuards(Mt5Guard)
-@Controller('mt5')
-export class Mt5Controller {
   constructor(
-  private readonly mt5Service: Mt5Service,
+    private readonly websocket:
+    WebsocketGateway,
 
-  private readonly websocketGateway: WebsocketGateway,
+    private readonly tradesRepository:
+    TradesRepository,
+  ) {}
 
-  private readonly tradesRepository: TradesRepository,
 
-  private readonly exposureService: ExposureService,
-) {}
+  // ======================================
+  // MARKET DATA
+  // ======================================
 
-  @Get('heartbeat')
-  heartbeat() {
-    return this.mt5Service.heartbeat();
-  }
-
-  @Post('market-data')
-  receiveMarketData(
-    @Body() dto: MarketDataDto,
+  async processMarketData(
+    data: AnalyzeDto,
   ) {
-    console.log(dto);
 
-    this.websocketGateway.emit(
-      'market-data',
-      dto,
-    );
+    // EMIT REALTIME MARKET
+    this.websocket
+      .emitMarketData(
+        data,
+      );
 
     return {
       success: true,
     };
   }
 
-  @Post('executed-trade')
-async executedTrade(
-  @Body() dto: ExecutedTradeDto,
-) {
-  await this.tradesRepository.createTrade({
-    symbol: dto.symbol,
 
-    type: dto.type,
+  // ======================================
+  // SAVE EXECUTED TRADE
+  // ======================================
 
-    lot: dto.lot,
+  async saveExecutedTrade(
+    data: any,
+  ) {
 
-    entry_price: dto.entryPrice,
+    try {
 
-    stop_loss: dto.stopLoss,
+      await this.tradesRepository
+        .createTrade({
+          symbol:
+          data.symbol,
 
-    take_profit: dto.takeProfit,
+          type:
+          data.type,
 
-    ticket: dto.ticket,
+          lot:
+          data.lot,
 
-    status: 'OPEN',
+          entry_price:
+          data.entryPrice,
 
-    opened_at: new Date(),
-  });
+          stop_loss:
+          data.stopLoss,
 
-  this.websocketGateway.emit(
-    'new-trade',
-    dto,
-  );
+          take_profit:
+          data.takeProfit,
 
-  return {
-    success: true,
-  };
-}
+          ticket:
+          data.ticket,
 
-@Post('exposure')
-updateExposure(
-  @Body()
-  dto: ExposureUpdateDto,
-) {
-  this.exposureService.updateState(
-    dto,
-  );
+          status:
+          'OPEN',
 
-  this.websocketGateway.emit(
-    'exposure-update',
-    dto,
-  );
+          opened_at:
+          new Date(),
+        });
 
-  return {
-    success: true,
-  };
-}
+    } catch (err) {
+
+      console.log(
+        'SAVE TRADE ERROR',
+        err,
+      );
+    }
+
+    // EMIT REALTIME
+    this.websocket
+      .emitTradeExecution(
+        data,
+      );
+
+    return {
+      success: true,
+    };
+  }
 }
