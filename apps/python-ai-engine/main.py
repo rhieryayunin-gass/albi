@@ -806,8 +806,6 @@ def generate_gpt_analysis(
                     },
                 ],
 
-                temperature=0.2,
-
                 max_completion_tokens=500,
             )
         )
