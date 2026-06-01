@@ -56,9 +56,7 @@ export interface MarketDataState {
 
   session: string;
 
-  positions: Position[];
-
-  timestamp: string;
+  dailyGrowth: number;
 }
 
 
@@ -78,7 +76,7 @@ export interface AiState {
 
   approved: boolean;
 
-  reason: string | null;
+  reason: string;
 
   analysis: string;
 
@@ -92,19 +90,7 @@ export interface AiState {
 
   best_strategy: string;
 
-  ai_engine: string;
-
-  session: string;
-
-  trend: string;
-
-  atr: number;
-
-  rsi: number;
-
-  spread: number;
-
-  timestamp: string;
+  updatedAt: string;
 }
 
 
@@ -116,15 +102,15 @@ export interface RiskState {
 
   approved: boolean;
 
-  score: number;
+  reason: string;
 
-  riskLevel: string;
+  score: number;
 
   warnings: string[];
 
-  reason: string | null;
+  riskLevel: string;
 
-  timestamp: string;
+  updatedAt: string;
 }
 
 

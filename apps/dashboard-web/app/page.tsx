@@ -5,14 +5,6 @@ import {
   useState,
 } from 'react';
 
-import {
-  motion,
-} from 'framer-motion';
-
-import {
-  AdvancedRealTimeChart,
-} from 'react-ts-tradingview-widgets';
-
 import AuthGuard
 from '../components/AuthGuard';
 
@@ -29,14 +21,19 @@ import {
 } from '../types/ai';
 
 import {
-  Shield,
   Brain,
+  Shield,
+  Newspaper,
   Activity,
   TrendingUp,
-  DollarSign,
-  BarChart3,
-  Zap,
+  TrendingDown,
   Target,
+  DollarSign,
+  AlertTriangle,
+  Sparkles,
+  Clock3,
+  Cpu,
+  CandlestickChart,
 } from 'lucide-react';
 
 
@@ -91,9 +88,9 @@ export default function HomePage() {
     >(null);
 
 
-  // =====================================
-  // SOCKET
-  // =====================================
+  // ====================================
+  // SOCKETS
+  // ====================================
 
   useEffect(() => {
 
@@ -146,41 +143,49 @@ export default function HomePage() {
   }, []);
 
 
+  const growth =
+    market?.dailyGrowth || 0;
+
+  const positive =
+    growth >= 0;
+
+
   return (
     <AuthGuard>
 
-      <main className="min-h-screen bg-[#f5f7fb] text-[#111827] overflow-hidden">
+      <main className="min-h-screen bg-[#f6f8fc] text-[#111827]">
 
         {/* BACKGROUND */}
-        <div className="fixed inset-0">
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
 
-          <div className="absolute top-[-300px] left-[-300px] w-[700px] h-[700px] rounded-full bg-blue-200/30 blur-3xl" />
+          <div className="absolute top-[-250px] left-[-250px] w-[600px] h-[600px] bg-blue-200/30 rounded-full blur-3xl" />
 
-          <div className="absolute bottom-[-300px] right-[-300px] w-[700px] h-[700px] rounded-full bg-yellow-200/30 blur-3xl" />
+          <div className="absolute bottom-[-250px] right-[-250px] w-[600px] h-[600px] bg-yellow-200/30 rounded-full blur-3xl" />
 
         </div>
 
 
         {/* NAVBAR */}
-        <nav className="relative z-20 border-b border-zinc-200 bg-white/70 backdrop-blur-3xl">
+        <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-3xl border-b border-zinc-200">
 
-          <div className="max-w-[1800px] mx-auto h-24 flex items-center justify-between px-10">
+          <div className="max-w-[1800px] mx-auto px-5 lg:px-10 h-20 flex items-center justify-between">
 
             <div>
 
-              <div className="text-4xl font-black tracking-tight text-[#111827]">
+              <div className="text-3xl lg:text-4xl font-black tracking-tight">
                 ALBI
               </div>
 
-              <div className="text-zinc-500 text-sm mt-1">
-                Autonomous Institutional Gold Intelligence
+              <div className="text-zinc-500 text-xs lg:text-sm mt-1">
+                Adaptive Learning & Behavioral Intelligence
               </div>
 
             </div>
 
-            <div className="flex items-center gap-4">
 
-              <AnimatedStatus
+            <div className="flex items-center gap-3">
+
+              <StatusPill
                 label={
                   emergency?.frozen
                     ? 'FROZEN'
@@ -191,7 +196,7 @@ export default function HomePage() {
                 }
               />
 
-              <AnimatedStatus
+              <StatusPill
                 label={
                   ai?.approved
                     ? 'AI APPROVED'
@@ -210,121 +215,141 @@ export default function HomePage() {
 
 
         {/* CONTENT */}
-        <section className="relative z-10 max-w-[1800px] mx-auto p-10">
+        <section className="relative z-10 max-w-[1800px] mx-auto px-4 lg:px-10 py-6 lg:py-10">
 
-          {/* HERO GRID */}
-          <div className="grid grid-cols-5 gap-6">
+          {/* HERO */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-            <MetricCard
-              title="Balance"
-              value={`$${market?.balance?.toFixed(2) || '0'}`}
-              icon={<DollarSign size={22} />}
-            />
+            {/* PRICE */}
+            <Card className="xl:col-span-2">
 
-            <MetricCard
-              title="Equity"
-              value={`$${market?.equity?.toFixed(2) || '0'}`}
-              icon={<TrendingUp size={22} />}
-            />
+              <div className="flex items-start justify-between">
 
-            <MetricCard
-              title="Confidence"
-              value={`${ai?.confidence || 0}%`}
-              icon={<Brain size={22} />}
-            />
+                <div>
 
-            <MetricCard
-              title="Risk Score"
-              value={`${risk?.score || 0}`}
-              icon={<Shield size={22} />}
-            />
+                  <div className="text-zinc-500 text-sm">
+                    LIVE XAUUSD
+                  </div>
 
-            <MetricCard
-              title="Winrate"
-              value={`${performance?.winrate || 0}%`}
-              icon={<Target size={22} />}
-            />
+                  <div className="text-5xl lg:text-7xl font-black mt-4 tracking-tight">
+
+                    {market?.bid
+                      ?.toFixed(2) || '0.00'}
+
+                  </div>
+
+                  <div className="mt-5 flex items-center gap-3">
+
+                    <div
+                      className={`
+                      flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold
+                      ${
+                        positive
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-red-100 text-red-700'
+                      }
+                      `}
+                    >
+
+                      {
+                        positive
+                          ? <TrendingUp size={18} />
+                          : <TrendingDown size={18} />
+                      }
+
+                      {growth}%
+
+                    </div>
+
+                    <MiniInfo
+                      label="Spread"
+                      value={market?.spread}
+                    />
+
+                    <MiniInfo
+                      label="Session"
+                      value={market?.session}
+                    />
+
+                    <MiniInfo
+                      label="Trend"
+                      value={market?.trend}
+                    />
+
+                  </div>
+
+                </div>
+
+
+                <div className="hidden lg:flex items-center justify-center w-24 h-24 rounded-3xl bg-yellow-100">
+
+                  <CandlestickChart
+                    size={42}
+                    className="text-yellow-600"
+                  />
+
+                </div>
+
+              </div>
+
+              <UpdateTime
+                text="Dashboard update every 5 seconds"
+              />
+
+            </Card>
+
+
+            {/* QUICK STATS */}
+            <div className="grid grid-cols-2 gap-4">
+
+              <SmallCard
+                title="Balance"
+                value={`$${market?.balance || 0}`}
+                icon={<DollarSign size={18} />}
+              />
+
+              <SmallCard
+                title="Equity"
+                value={`$${market?.equity || 0}`}
+                icon={<Activity size={18} />}
+              />
+
+              <SmallCard
+                title="Confidence"
+                value={`${ai?.confidence || 0}%`}
+                icon={<Brain size={18} />}
+              />
+
+              <SmallCard
+                title="Risk Score"
+                value={`${risk?.score || 0}`}
+                icon={<Shield size={18} />}
+              />
+
+            </div>
 
           </div>
 
 
-          {/* CHART + AI */}
-          <div className="grid grid-cols-3 gap-6 mt-6">
+          {/* MAIN GRID */}
+          <div className="grid grid-cols-1 2xl:grid-cols-12 gap-6 mt-6">
 
-            {/* CHART */}
-            <GlassCard className="col-span-2 p-0 overflow-hidden">
 
-              <div className="p-6 border-b border-zinc-200 flex items-center justify-between">
+            {/* AI ANALYSIS */}
+            <Card className="2xl:col-span-4">
 
-                <div>
+              <SectionHeader
+                title="AI ANALYSIS"
+                subtitle="Updated every 10 minutes"
+                icon={<Brain size={20} />}
+              />
 
-                  <div className="text-zinc-500 text-sm">
-                    LIVE MARKET
-                  </div>
+              <div className="grid grid-cols-2 gap-5 mt-8">
 
-                  <div className="text-3xl font-bold mt-1">
-                    {market?.symbol || 'XAUUSD'}
-                  </div>
-
-                </div>
-
-                <div className="flex items-center gap-3">
-
-                  <MiniBadge
-                    label={
-                      market?.session || '-'
-                    }
-                  />
-
-                  <MiniBadge
-                    label={
-                      market?.trend || '-'
-                    }
-                  />
-
-                </div>
-
-              </div>
-
-              <div className="h-[700px]">
-
-                {/* FIX TV CHART */}
-                <AdvancedRealTimeChart
-                  theme="light"
-                  autosize
-                  symbol="OANDA:XAUUSD"
-                  locale="en"
-                  width="100%"
-                  height="700"
+                <Info
+                  label="Signal"
+                  value={ai?.signal}
                 />
-
-              </div>
-
-            </GlassCard>
-
-
-            {/* AI PANEL */}
-            <GlassCard className="p-7">
-
-              <div className="flex items-center gap-3">
-
-                <Brain />
-
-                <div>
-
-                  <div className="text-zinc-500 text-sm">
-                    AI ORCHESTRATION
-                  </div>
-
-                  <div className="text-2xl font-bold mt-1">
-                    {ai?.signal || 'NO SIGNAL'}
-                  </div>
-
-                </div>
-
-              </div>
-
-              <div className="space-y-5 mt-8">
 
                 <Info
                   label="Regime"
@@ -342,83 +367,74 @@ export default function HomePage() {
                 />
 
                 <Info
-                  label="Best Strategy"
-                  value={ai?.best_strategy}
-                />
-
-                <Info
                   label="Expected PnL"
                   value={`$${ai?.expected_pnl || 0}`}
                 />
 
                 <Info
-                  label="Expected Winrate"
+                  label="Winrate"
                   value={`${ai?.expected_winrate || 0}%`}
-                />
-
-                <Info
-                  label="Expected DD"
-                  value={`${ai?.expected_drawdown || 0}`}
-                />
-
-                <Info
-                  label="Risk Level"
-                  value={risk?.riskLevel}
                 />
 
               </div>
 
               <div className="mt-8">
 
-                <div className="text-zinc-500 text-sm mb-3">
-                  GPT INSTITUTIONAL REASONING
+                <div className="text-xs text-zinc-500 uppercase tracking-wider mb-3">
+                  Institutional Reasoning
                 </div>
 
-                <div className="bg-[#f8fafc] border border-zinc-200 rounded-2xl p-5 text-sm leading-7 text-zinc-700">
+                <div className="bg-[#f8fafc] border border-zinc-200 rounded-3xl p-5 leading-7 text-sm text-zinc-700">
                   {ai?.analysis || 'Waiting AI analysis...'}
                 </div>
 
               </div>
 
-            </GlassCard>
-
-          </div>
-
-
-          {/* ANALYTICS */}
-          <div className="grid grid-cols-4 gap-6 mt-6">
-
-            <GlassCard className="p-6">
-
-              <SectionTitle
-                title="MARKET"
-                icon={<Activity size={18} />}
+              <UpdateTime
+                text={
+                  ai?.updatedAt ||
+                  'Last AI analysis waiting...'
+                }
               />
 
-              <div className="space-y-4 mt-6">
-
-                <Info label="Spread" value={market?.spread} />
-                <Info label="ATR" value={market?.atr} />
-                <Info label="RSI" value={market?.rsi} />
-                <Info label="EMA20" value={market?.ema20} />
-                <Info label="EMA50" value={market?.ema50} />
-                <Info label="EMA200" value={market?.ema200} />
-
-              </div>
-
-            </GlassCard>
+            </Card>
 
 
-            <GlassCard className="p-6">
+            {/* MONTE CARLO */}
+            <Card className="2xl:col-span-4">
 
-              <SectionTitle
-                title="RISK ENGINE"
-                icon={<Shield size={18} />}
+              <SectionHeader
+                title="MONTE CARLO"
+                subtitle="Recalculated every 30 minutes"
+                icon={<Cpu size={20} />}
               />
 
-              <div className="space-y-4 mt-6">
+              <div className="space-y-6 mt-8">
 
-                <Info
+                <MonteCarloCard
+                  label="Expected Drawdown"
+                  value={`${ai?.expected_drawdown || 0}%`}
+                />
+
+                <MonteCarloCard
+                  label="Best Strategy"
+                  value={ai?.best_strategy}
+                />
+
+                <MonteCarloCard
+                  label="Risk Level"
+                  value={risk?.riskLevel}
+                />
+
+                <MonteCarloCard
+                  label="Warnings"
+                  value={
+                    risk?.warnings?.join(', ') ||
+                    '-'
+                  }
+                />
+
+                <MonteCarloCard
                   label="Approval"
                   value={
                     risk?.approved
@@ -427,53 +443,121 @@ export default function HomePage() {
                   }
                 />
 
-                <Info
-                  label="Reason"
-                  value={risk?.reason}
+              </div>
+
+              <UpdateTime
+                text={
+                  risk?.updatedAt ||
+                  'Monte Carlo updated 30 minutes interval'
+                }
+              />
+
+            </Card>
+
+
+            {/* FUNDAMENTAL */}
+            <Card className="2xl:col-span-4">
+
+              <SectionHeader
+                title="FUNDAMENTAL ANALYSIS"
+                subtitle="Updated every 1 hour"
+                icon={<Newspaper size={20} />}
+              />
+
+              <div className="space-y-4 mt-8">
+
+                <NewsItem
+                  title="FED rate cut expectations continue supporting gold strength."
+                  time="01 Jun 2026 • 22:00"
+                  latest
                 />
 
-                <Info
-                  label="Warnings"
-                  value={
-                    risk?.warnings?.join(', ')
-                  }
+                <NewsItem
+                  title="Institutional inflow detected during London session."
+                  time="01 Jun 2026 • 21:00"
+                />
+
+                <NewsItem
+                  title="US Dollar weakness increases bullish probability for XAUUSD."
+                  time="01 Jun 2026 • 20:00"
+                />
+
+                <NewsItem
+                  title="Geopolitical uncertainty maintains safe haven demand."
+                  time="01 Jun 2026 • 19:00"
                 />
 
               </div>
 
-            </GlassCard>
-
-
-            <GlassCard className="p-6">
-
-              <SectionTitle
-                title="PERFORMANCE"
-                icon={<BarChart3 size={18} />}
+              <UpdateTime
+                text="Fundamental engine refresh every 1 hour"
               />
 
-              <div className="space-y-4 mt-6">
+            </Card>
+
+          </div>
+
+
+          {/* LOWER GRID */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
+
+
+            {/* MARKET */}
+            <Card>
+
+              <SectionHeader
+                title="MARKET ENGINE"
+                subtitle="Realtime market telemetry"
+                icon={<Activity size={20} />}
+              />
+
+              <div className="space-y-5 mt-8">
+
+                <Info label="ATR" value={market?.atr} />
+                <Info label="RSI" value={market?.rsi} />
+                <Info label="EMA20" value={market?.ema20} />
+                <Info label="EMA50" value={market?.ema50} />
+                <Info label="EMA200" value={market?.ema200} />
+
+              </div>
+
+            </Card>
+
+
+            {/* PERFORMANCE */}
+            <Card>
+
+              <SectionHeader
+                title="PERFORMANCE"
+                subtitle="Realtime portfolio metrics"
+                icon={<Target size={20} />}
+              />
+
+              <div className="space-y-5 mt-8">
 
                 <Info label="Trades" value={performance?.totalTrades} />
                 <Info label="Wins" value={performance?.wins} />
                 <Info label="Losses" value={performance?.losses} />
                 <Info label="Profit" value={`$${performance?.totalProfit || 0}`} />
-                <Info label="Max DD" value={`${performance?.maxDrawdown || 0}`} />
+                <Info label="Max DD" value={`${performance?.maxDrawdown || 0}%`} />
 
               </div>
 
-            </GlassCard>
+            </Card>
 
 
-            <GlassCard className="p-6">
+            {/* EXECUTION */}
+            <Card>
 
-              <SectionTitle
+              <SectionHeader
                 title="EXECUTION"
-                icon={<Zap size={18} />}
+                subtitle="Latest MT5 execution"
+                icon={<Sparkles size={20} />}
               />
 
-              <div className="space-y-4 mt-6">
+              <div className="space-y-5 mt-8">
 
-                <Info label="Last Ticket" value={trade?.ticket} />
+                <Info label="Ticket" value={trade?.ticket} />
                 <Info label="Type" value={trade?.type} />
                 <Info label="Lot" value={trade?.lot} />
                 <Info label="Entry" value={trade?.entryPrice} />
@@ -482,7 +566,7 @@ export default function HomePage() {
 
               </div>
 
-            </GlassCard>
+            </Card>
 
           </div>
 
@@ -495,46 +579,40 @@ export default function HomePage() {
 }
 
 
-// =========================================
+// ====================================
 // COMPONENTS
-// =========================================
+// ====================================
 
-function GlassCard({
+function Card({
   children,
   className,
 }: any) {
 
   return (
-    <motion.div
-
-      whileHover={{
-        y: -4,
-      }}
-
+    <div
       className={`
-      bg-white/80
-      border
-      border-zinc-200
+      bg-white
+      border border-zinc-200
       rounded-[32px]
-      backdrop-blur-3xl
-      shadow-[0_10px_40px_rgba(0,0,0,0.06)]
+      shadow-[0_10px_40px_rgba(0,0,0,0.04)]
+      p-6 lg:p-8
       ${className}
       `}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }
 
 
-function MetricCard({
+function SmallCard({
   title,
   value,
   icon,
 }: any) {
 
   return (
-    <GlassCard className="p-6">
+    <Card>
 
       <div className="flex items-center justify-between">
 
@@ -548,11 +626,41 @@ function MetricCard({
 
       </div>
 
-      <div className="text-4xl font-black mt-5 tracking-tight">
+      <div className="text-2xl lg:text-3xl font-black mt-5">
         {value}
       </div>
 
-    </GlassCard>
+    </Card>
+  );
+}
+
+
+function SectionHeader({
+  title,
+  subtitle,
+  icon,
+}: any) {
+
+  return (
+    <div className="flex items-start justify-between">
+
+      <div>
+
+        <div className="flex items-center gap-2 font-bold text-lg">
+
+          {icon}
+
+          {title}
+
+        </div>
+
+        <div className="text-zinc-500 text-sm mt-2">
+          {subtitle}
+        </div>
+
+      </div>
+
+    </div>
   );
 }
 
@@ -569,7 +677,7 @@ function Info({
         {label}
       </div>
 
-      <div className="text-lg font-semibold mt-1 break-words">
+      <div className="text-lg font-semibold mt-2">
         {value || '-'}
       </div>
 
@@ -578,18 +686,56 @@ function Info({
 }
 
 
-function SectionTitle({
-  title,
-  icon,
+function StatusPill({
+  label,
+  active,
 }: any) {
 
   return (
-    <div className="flex items-center gap-2">
+    <div
+      className={`
+      flex items-center gap-2
+      px-4 py-2 rounded-2xl text-sm font-semibold
+      ${
+        active
+          ? 'bg-green-100 text-green-700'
+          : 'bg-red-100 text-red-700'
+      }
+      `}
+    >
 
-      {icon}
+      <div
+        className={`
+        w-2.5 h-2.5 rounded-full animate-pulse
+        ${
+          active
+            ? 'bg-green-500'
+            : 'bg-red-500'
+        }
+        `}
+      />
 
-      <div className="font-bold tracking-wide">
-        {title}
+      {label}
+
+    </div>
+  );
+}
+
+
+function MiniInfo({
+  label,
+  value,
+}: any) {
+
+  return (
+    <div className="px-4 py-2 rounded-2xl bg-white border border-zinc-200">
+
+      <div className="text-zinc-400 text-xs">
+        {label}
+      </div>
+
+      <div className="font-semibold text-sm mt-1">
+        {value}
       </div>
 
     </div>
@@ -597,85 +743,82 @@ function SectionTitle({
 }
 
 
-function AnimatedStatus({
+function MonteCarloCard({
   label,
-  active,
+  value,
 }: any) {
 
   return (
-    <motion.div
+    <div className="bg-[#f8fafc] border border-zinc-200 rounded-3xl p-5">
 
-      animate={{
-        scale: [1, 1.03, 1],
-        opacity: [0.9, 1, 0.9],
-      }}
-
-      transition={{
-        duration: 2,
-        repeat: Infinity,
-      }}
-
-      className={`
-      relative overflow-hidden
-      px-5 py-3 rounded-2xl text-sm font-semibold
-      border shadow-lg
-      ${
-        active
-          ? 'bg-green-100 text-green-700 border-green-200'
-          : 'bg-red-100 text-red-700 border-red-200'
-      }
-      `}
-    >
-
-      <div
-        className={`
-        absolute top-0 left-[-100%]
-        w-full h-full
-        ${
-          active
-            ? 'bg-gradient-to-r from-transparent via-white/60 to-transparent'
-            : 'bg-gradient-to-r from-transparent via-red-200/60 to-transparent'
-        }
-        animate-[shine_2s_linear_infinite]
-        `}
-      />
-
-      <div className="relative flex items-center gap-2">
-
-        <motion.div
-          animate={{
-            scale: [1, 1.4, 1],
-          }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-          }}
-          className={`
-          w-2.5 h-2.5 rounded-full
-          ${
-            active
-              ? 'bg-green-500'
-              : 'bg-red-500'
-          }
-          `}
-        />
-
+      <div className="text-zinc-500 text-xs uppercase tracking-wider">
         {label}
-
       </div>
 
-    </motion.div>
+      <div className="font-bold text-xl mt-3">
+        {value || '-'}
+      </div>
+
+    </div>
   );
 }
 
 
-function MiniBadge({
-  label,
+function NewsItem({
+  title,
+  time,
+  latest,
 }: any) {
 
   return (
-    <div className="px-4 py-2 rounded-xl bg-[#f5f7fb] border border-zinc-200 text-sm text-zinc-700">
-      {label}
+    <div
+      className={`
+      rounded-3xl border p-5
+      ${
+        latest
+          ? 'bg-blue-50 border-blue-200'
+          : 'bg-[#f8fafc] border-zinc-200'
+      }
+      `}
+    >
+
+      <div className="flex items-start justify-between gap-4">
+
+        <div className="font-medium leading-7">
+          {title}
+        </div>
+
+        {
+          latest &&
+          (
+            <div className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold whitespace-nowrap">
+              LATEST
+            </div>
+          )
+        }
+
+      </div>
+
+      <div className="flex items-center gap-2 text-zinc-500 text-xs mt-4">
+
+        <Clock3 size={13} />
+
+        {time}
+
+      </div>
+
+    </div>
+  );
+}
+
+
+function UpdateTime({
+  text,
+}: any) {
+
+  return (
+    <div className="mt-6 text-xs text-zinc-400">
+      {text}
     </div>
   );
 }
