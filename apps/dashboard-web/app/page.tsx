@@ -49,6 +49,8 @@ export default function HomePage() {
       'market-data',
       (data) => {
         setMarketData(data);
+
+        analyzeAi(data);
       },
     );
 
@@ -68,51 +70,101 @@ export default function HomePage() {
     };
   }, []);
 
-  async function analyzeAi() {
-    if (!marketData) return;
+  async function analyzeAi(
+    liveData?: any,
+  ) {
+    try {
+      const payload =
+        liveData || marketData;
 
-    const response = await fetch(
-      'https://api.albiagent.com/ai-engine/analyze',
-      {
-        method: 'POST',
+      if (!payload) return;
 
-        headers: {
-          'Content-Type':
-            'application/json',
+      const response = await fetch(
+        'https://api.albiagent.com/ai-engine/analyze',
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type':
+              'application/json',
+          },
+
+          body: JSON.stringify({
+            symbol:
+              payload.symbol,
+
+            bid: payload.bid,
+
+            ask: payload.ask,
+
+            spread:
+              payload.spread,
+
+            balance:
+              payload.balance,
+
+            equity:
+              payload.equity,
+          }),
         },
+      );
 
-        body: JSON.stringify(
-          marketData,
-        ),
-      },
-    );
+      const data =
+        await response.json();
 
-    const data =
-      await response.json();
+      console.log(
+        'AI RESPONSE',
+        data,
+      );
 
-    setAiState(data);
+      setAiState(data);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   async function loadPerformance() {
-    const response = await fetch(
-      'https://api.albiagent.com/ai-memory/performance',
-    );
+    try {
+      const response =
+        await fetch(
+          'https://api.albiagent.com/ai-memory/performance',
+        );
 
-    const data =
-      await response.json();
+      const data =
+        await response.json();
 
-    setPerformance(data);
+      console.log(
+        'PERFORMANCE',
+        data,
+      );
+
+      setPerformance(data);
+    } catch (err) {
+      console.log(err);
+
+      setPerformance({
+        winrate: 0,
+        wins: 0,
+        losses: 0,
+        totalProfit: 0,
+      });
+    }
   }
 
   async function loadEmergencyState() {
-    const response = await fetch(
-      'https://api.albiagent.com/emergency/state',
-    );
+    try {
+      const response =
+        await fetch(
+          'https://api.albiagent.com/emergency/state',
+        );
 
-    const data =
-      await response.json();
+      const data =
+        await response.json();
 
-    setEmergencyState(data);
+      setEmergencyState(data);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   async function freezeTrading() {
@@ -237,7 +289,9 @@ export default function HomePage() {
                 </div>
 
                 <button
-                  onClick={analyzeAi}
+                  onClick={() =>
+                    analyzeAi()
+                  }
                   className="bg-white text-black px-5 py-3 rounded-2xl font-medium"
                 >
                   Analyze AI
@@ -274,7 +328,7 @@ export default function HomePage() {
                   label="Signal"
                   value={
                     aiState?.signal ||
-                    '-'
+                    'WAITING'
                   }
                 />
 
@@ -287,7 +341,7 @@ export default function HomePage() {
                   label="Regime"
                   value={
                     aiState?.regime ||
-                    '-'
+                    'UNKNOWN'
                   }
                 />
 
@@ -295,7 +349,7 @@ export default function HomePage() {
                   label="Strategy"
                   value={
                     aiState?.strategy ||
-                    '-'
+                    'UNKNOWN'
                   }
                 />
 
@@ -303,7 +357,7 @@ export default function HomePage() {
                   label="AI Engine"
                   value={
                     aiState?.ai_engine ||
-                    '-'
+                    'PYTHON'
                   }
                 />
 

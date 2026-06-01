@@ -15,7 +15,7 @@ export default function AiMemoryPage() {
 
   async function loadPerformance() {
     const response = await fetch(
-      'https://api.albiagent.com/ai-memory/performance',
+      'https://psychic-doodle-4qjjvw5pvjvjc74rr-8000.app.github.dev/performance',
     );
 
     const data =
