@@ -46,7 +46,7 @@ export interface RiskValidationResult {
 // ========================================
 
 @Injectable()
-export class RiskEngineService {
+export class AiEngineService {
 
   // ======================================
   // MAIN VALIDATOR
