@@ -1,105 +1,85 @@
 import {
-  Injectable,
+  Body,
+  Controller,
+  Get,
+  Post,
+  UseGuards,
 } from '@nestjs/common';
 
-import { WebsocketGateway }
-from '../websocket/websocket.gateway';
+import { Mt5Service }
+from './mt5.service';
 
-import { TradesRepository }
-from '../trades/trades.repository';
+import { Mt5Guard }
+from './mt5.guard';
 
 import { AnalyzeDto }
 from '../ai-engine/dto/analyze.dto';
 
 
-@Injectable()
-export class Mt5Service {
+@Controller('mt5')
+export class Mt5Controller {
 
   constructor(
-    private readonly websocket:
-    WebsocketGateway,
-
-    private readonly tradesRepository:
-    TradesRepository,
+    private readonly mt5Service:
+    Mt5Service,
   ) {}
 
 
-  // ======================================
-  // MARKET DATA
-  // ======================================
-
-  async processMarketData(
-    data: AnalyzeDto,
-  ) {
-
-    // EMIT REALTIME MARKET
-    this.websocket
-      .emitMarketData(
-        data,
-      );
+  @Get('heartbeat')
+  heartbeat() {
 
     return {
       success: true,
+
+      service:
+      'ALBI MT5 BRIDGE',
+
+      status: 'LIVE',
+
+      timestamp:
+      new Date(),
     };
   }
 
 
-  // ======================================
-  // SAVE EXECUTED TRADE
-  // ======================================
-
-  async saveExecutedTrade(
-    data: any,
+  @UseGuards(Mt5Guard)
+  @Post('market-data')
+  async marketData(
+    @Body()
+    body: AnalyzeDto,
   ) {
 
-    try {
-
-      await this.tradesRepository
-        .createTrade({
-          symbol:
-          data.symbol,
-
-          type:
-          data.type,
-
-          lot:
-          data.lot,
-
-          entry_price:
-          data.entryPrice,
-
-          stop_loss:
-          data.stopLoss,
-
-          take_profit:
-          data.takeProfit,
-
-          ticket:
-          data.ticket,
-
-          status:
-          'OPEN',
-
-          opened_at:
-          new Date(),
-        });
-
-    } catch (err) {
-
-      console.log(
-        'SAVE TRADE ERROR',
-        err,
-      );
-    }
-
-    // EMIT REALTIME
-    this.websocket
-      .emitTradeExecution(
-        data,
+    await this.mt5Service
+      .processMarketData(
+        body,
       );
 
     return {
       success: true,
+
+      message:
+      'MARKET DATA RECEIVED',
+    };
+  }
+
+
+  @UseGuards(Mt5Guard)
+  @Post('executed-trade')
+  async executedTrade(
+    @Body()
+    body: any,
+  ) {
+
+    await this.mt5Service
+      .saveExecutedTrade(
+        body,
+      );
+
+    return {
+      success: true,
+
+      message:
+      'TRADE SAVED',
     };
   }
 }
