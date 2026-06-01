@@ -1,483 +1,288 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 
+import axios from 'axios';
 
-// ========================================
-// TYPES
-// ========================================
+import { RiskEngineService }
+from '../risk-engine/risk-engine.service';
 
-export interface RiskValidationInput {
-  confidence: number;
+import { AiMemoryService }
+from '../ai-memory/ai-memory.service';
 
-  exposure: number;
+import { AnalyzeDto }
+from './dto/analyze.dto';
 
-  openPositions: number;
-
-  spread: number;
-
-  atr: number;
-
-  session: string;
-
-  expectedPnl: number;
-
-  expectedWinrate: number;
-
-  expectedDrawdown: number;
-
-  approved?: boolean;
-}
-
-
-export interface RiskValidationResult {
-  approved: boolean;
-
-  reason: string | null;
-
-  score: number;
-
-  warnings: string[];
-
-  riskLevel: string;
-}
-
-
-// ========================================
-// SERVICE
-// ========================================
 
 @Injectable()
 export class AiEngineService {
 
+  constructor(
+    private readonly riskEngine:
+    RiskEngineService,
+
+    private readonly aiMemory:
+    AiMemoryService,
+  ) {}
+
+
   // ======================================
-  // MAIN VALIDATOR
+  // MAIN AI ANALYSIS
   // ======================================
 
-  validateTrade(
-    data: RiskValidationInput,
-  ): RiskValidationResult {
+  async analyzeMarket(
+    data: AnalyzeDto,
+  ) {
 
-    let score = 100;
+    try {
 
-    const warnings: string[] =
-      [];
+      // ==================================
+      // CALL PYTHON AI ENGINE
+      // ==================================
 
-    // ====================================
-    // HARD LIMITS
-    // ====================================
+      const response =
+        await axios.post(
+          process.env
+            .PYTHON_AI_ENGINE_URL!,
+          data,
+        );
 
-    const hardLimitResult =
-      this.checkHardLimits(
-        data,
-      );
+      const ai =
+        response.data;
 
-    if (
-      !hardLimitResult.approved
-    ) {
-      return {
-        approved: false,
+
+      // ==================================
+      // RISK VALIDATION
+      // ==================================
+
+      const risk =
+        this.riskEngine
+          .validateTrade({
+            confidence:
+            ai.confidence,
+
+            exposure:
+            this.calculateExposure(
+              data.positions,
+            ),
+
+            openPositions:
+            data.positions
+              .length,
+
+            spread:
+            data.spread,
+
+            atr:
+            data.atr,
+
+            session:
+            data.session,
+
+            expectedPnl:
+            ai.expected_pnl,
+
+            expectedWinrate:
+            ai.expected_winrate,
+
+            expectedDrawdown:
+            ai.expected_drawdown,
+          });
+
+
+      // ==================================
+      // FINAL RESULT
+      // ==================================
+
+      const result = {
+
+        signal:
+        ai.signal,
+
+        confidence:
+        ai.confidence,
+
+        regime:
+        ai.regime,
+
+        strategy:
+        ai.strategy,
+
+        approved:
+        risk.approved,
 
         reason:
-          hardLimitResult.reason,
+        risk.reason,
 
-        score: 0,
+        score:
+        risk.score,
 
         warnings:
-          hardLimitResult.warnings,
+        risk.warnings,
 
         riskLevel:
-          'CRITICAL',
+        risk.riskLevel,
+
+        analysis:
+        ai.analysis,
+
+        macro_bias:
+        ai.macro_bias,
+
+        expected_pnl:
+        ai.expected_pnl,
+
+        expected_winrate:
+        ai.expected_winrate,
+
+        expected_drawdown:
+        ai.expected_drawdown,
+
+        best_strategy:
+        ai.best_strategy,
+
+        ai_engine:
+        ai.ai_engine,
+
+        session:
+        data.session,
+
+        trend:
+        data.trend,
+
+        spread:
+        data.spread,
+
+        atr:
+        data.atr,
+
+        rsi:
+        data.rsi,
       };
-    }
 
-    // ====================================
-    // CONFIDENCE
-    // ====================================
 
-    if (
-      data.confidence >= 90
-    ) {
-      score += 10;
-    }
+      // ==================================
+      // SAVE AI MEMORY
+      // ==================================
 
-    else if (
-      data.confidence >= 80
-    ) {
-      score += 5;
-    }
+      await this.aiMemory
+        .saveMemory({
+          symbol:
+          data.symbol,
 
-    else if (
-      data.confidence < 75
-    ) {
-      score -= 25;
+          signal:
+          result.signal,
 
-      warnings.push(
-        'LOW_CONFIDENCE',
+          confidence:
+          result.confidence,
+
+          regime:
+          result.regime,
+
+          strategy:
+          result.strategy,
+
+          approved:
+          result.approved,
+
+          macroBias:
+          result.macro_bias,
+
+          expectedPnl:
+          result.expected_pnl,
+
+          expectedWinrate:
+          result.expected_winrate,
+
+          expectedDrawdown:
+          result.expected_drawdown,
+
+          bestStrategy:
+          result.best_strategy,
+
+          analysis:
+          result.analysis,
+
+          riskScore:
+          result.score,
+
+          riskLevel:
+          result.riskLevel,
+
+          spread:
+          result.spread,
+
+          atr:
+          result.atr,
+
+          rsi:
+          result.rsi,
+
+          trend:
+          result.trend,
+
+          session:
+          result.session,
+        });
+
+
+      // ==================================
+      // RETURN FINAL
+      // ==================================
+
+      return result;
+
+    } catch (err) {
+
+      console.log(
+        'AI ENGINE ERROR',
+        err,
+      );
+
+      throw new HttpException(
+        {
+          success: false,
+
+          message:
+          'AI ENGINE FAILED',
+
+          error:
+          (err as any)?.message
+        },
+
+        HttpStatus
+          .INTERNAL_SERVER_ERROR,
       );
     }
+  }
 
-    // ====================================
-    // SPREAD
-    // ====================================
 
-    if (
-      data.spread > 45
-    ) {
-      score -= 35;
+  // ======================================
+  // EXPOSURE CALCULATION
+  // ======================================
 
-      warnings.push(
-        'HIGH_SPREAD',
-      );
+  private calculateExposure(
+    positions: any[],
+  ) {
+
+    if (!positions) {
+      return 0;
     }
 
-    else if (
-      data.spread > 30
-    ) {
-      score -= 15;
-
-      warnings.push(
-        'MEDIUM_SPREAD',
-      );
-    }
-
-    // ====================================
-    // ATR / VOLATILITY
-    // ====================================
-
-    if (data.atr > 50) {
-      score -= 30;
-
-      warnings.push(
-        'EXTREME_VOLATILITY',
-      );
-    }
-
-    else if (
-      data.atr > 35
-    ) {
-      score -= 15;
-
-      warnings.push(
-        'HIGH_VOLATILITY',
-      );
-    }
-
-    // ====================================
-    // SESSION FILTER
-    // ====================================
-
-    if (
-      data.session ===
-      'ASIA'
-    ) {
-      score -= 10;
-
-      warnings.push(
-        'LOW_LIQUIDITY_SESSION',
-      );
-    }
-
-    if (
-      data.session ===
-      'AFTER_HOURS'
-    ) {
-      score -= 25;
-
-      warnings.push(
-        'DEAD_MARKET_SESSION',
-      );
-    }
-
-    // ====================================
-    // MONTE CARLO
-    // ====================================
-
-    if (
-      data.expectedWinrate >=
-      65
-    ) {
-      score += 15;
-    }
-
-    else if (
-      data.expectedWinrate >=
-      55
-    ) {
-      score += 5;
-    }
-
-    else {
-      score -= 25;
-
-      warnings.push(
-        'LOW_EXPECTED_WINRATE',
-      );
-    }
-
-    // ====================================
-    // EXPECTED DRAWDOWN
-    // ====================================
-
-    if (
-      data.expectedDrawdown >
-      100
-    ) {
-      score -= 35;
-
-      warnings.push(
-        'EXTREME_DRAWDOWN',
-      );
-    }
-
-    else if (
-      data.expectedDrawdown >
-      70
-    ) {
-      score -= 20;
-
-      warnings.push(
-        'HIGH_DRAWDOWN',
-      );
-    }
-
-    // ====================================
-    // EXPECTED PNL
-    // ====================================
-
-    if (
-      data.expectedPnl > 0
-    ) {
-      score += 10;
-    }
-
-    else {
-      score -= 15;
-
-      warnings.push(
-        'NEGATIVE_EXPECTANCY',
-      );
-    }
-
-    // ====================================
-    // EXPOSURE
-    // ====================================
-
-    if (
-      data.exposure >= 0.4
-    ) {
-      score -= 20;
-
-      warnings.push(
-        'HIGH_EXPOSURE',
-      );
-    }
-
-    else if (
-      data.exposure >= 0.3
-    ) {
-      score -= 10;
-
-      warnings.push(
-        'MEDIUM_EXPOSURE',
-      );
-    }
-
-    // ====================================
-    // OPEN POSITIONS
-    // ====================================
-
-    if (
-      data.openPositions >=
-      1
-    ) {
-      score -= 15;
-
-      warnings.push(
-        'POSITION_ALREADY_EXISTS',
-      );
-    }
-
-    // ====================================
-    // FINAL SCORE CLAMP
-    // ====================================
-
-    score = Math.max(
-      0,
-      Math.min(score, 100),
-    );
-
-    // ====================================
-    // FINAL APPROVAL
-    // ====================================
-
-    const approved =
-      score >= 70;
-
-    return {
-      approved,
-
-      reason: approved
-        ? null
-        : 'RISK_ENGINE_REJECTED',
-
-      score,
-
-      warnings,
-
-      riskLevel:
-        this.calculateRiskLevel(
-          score,
+    return positions.reduce(
+      (
+        total,
+        position,
+      ) =>
+        total +
+        (
+          position.volume ||
+          0
         ),
-    };
-  }
 
-
-  // ======================================
-  // HARD LIMITS
-  // ======================================
-
-  private checkHardLimits(
-    data: RiskValidationInput,
-  ) {
-    const warnings: string[] =
-      [];
-
-    // ====================================
-    // MAX EXPOSURE
-    // ====================================
-
-    if (
-      data.exposure > 0.5
-    ) {
-      warnings.push(
-        'MAX_EXPOSURE_LIMIT',
-      );
-
-      return {
-        approved: false,
-
-        reason:
-          'MAX_EXPOSURE_LIMIT',
-
-        warnings,
-      };
-    }
-
-    // ====================================
-    // MAX POSITIONS
-    // ====================================
-
-    if (
-      data.openPositions >=
-      1
-    ) {
-      warnings.push(
-        'MAX_POSITION_LIMIT',
-      );
-
-      return {
-        approved: false,
-
-        reason:
-          'MAX_POSITION_LIMIT',
-
-        warnings,
-      };
-    }
-
-    // ====================================
-    // EXTREME SPREAD
-    // ====================================
-
-    if (
-      data.spread > 70
-    ) {
-      warnings.push(
-        'EXTREME_SPREAD',
-      );
-
-      return {
-        approved: false,
-
-        reason:
-          'EXTREME_SPREAD',
-
-        warnings,
-      };
-    }
-
-    // ====================================
-    // EXTREME ATR
-    // ====================================
-
-    if (
-      data.atr > 80
-    ) {
-      warnings.push(
-        'EXTREME_VOLATILITY',
-      );
-
-      return {
-        approved: false,
-
-        reason:
-          'EXTREME_VOLATILITY',
-
-        warnings,
-      };
-    }
-
-    // ====================================
-    // BAD MONTE CARLO
-    // ====================================
-
-    if (
-      data.expectedWinrate <
-      45
-    ) {
-      warnings.push(
-        'BAD_MONTE_CARLO',
-      );
-
-      return {
-        approved: false,
-
-        reason:
-          'BAD_MONTE_CARLO',
-
-        warnings,
-      };
-    }
-
-    return {
-      approved: true,
-
-      reason: null,
-
-      warnings,
-    };
-  }
-
-
-  // ======================================
-  // RISK LEVEL
-  // ======================================
-
-  private calculateRiskLevel(
-    score: number,
-  ) {
-    if (score >= 90) {
-      return 'LOW';
-    }
-
-    if (score >= 75) {
-      return 'MEDIUM';
-    }
-
-    if (score >= 60) {
-      return 'HIGH';
-    }
-
-    return 'CRITICAL';
+      0,
+    );
   }
 }
-
