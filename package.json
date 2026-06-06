@@ -1,10 +1,12 @@
 {
   "name": "albi",
   "private": true,
-  "packageManager": "pnpm@11.4.0",
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "dev": "pnpm -r dev",
-    "build": "pnpm -r build"
+    "dev": "npm run dev --workspaces",
+    "build": "npm run build --workspaces"
   },
   "devDependencies": {
     "dotenv-cli": "^11.0.0"
