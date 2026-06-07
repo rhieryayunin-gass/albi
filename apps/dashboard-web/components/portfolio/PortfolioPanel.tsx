@@ -67,11 +67,15 @@ export default function PortfolioPanel() {
   );
 }
 
+interface MetricProps {
+  label: string;
+  value: string | number;
+}
+
 function Metric({
   label,
   value,
-}: any) {
-
+}: MetricProps): React.JSX.Element {
   return (
     <div
       className="

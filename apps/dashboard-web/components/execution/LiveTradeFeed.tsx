@@ -13,10 +13,15 @@ from "../shared/SectionCard";
 
 export default function LiveTradeFeed() {
 
-  const [
-    trades,
-    setTrades,
-  ] = useState<any[]>([]);
+  interface TradeFeed {
+  signal: string;
+  strategy: string;
+}
+
+const [
+  trades,
+  setTrades,
+] = useState<TradeFeed[]>([]);
 
   useEffect(() => {
 

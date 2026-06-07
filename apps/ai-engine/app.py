@@ -2,175 +2,199 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
-from models.market_model import *
-from models.ai_response_model import *
+from models.market_model import MarketData
 
-from engines.regime_engine import *
-from engines.structure_engine import *
-from engines.liquidity_engine import *
-from engines.volatility_engine import *
-from engines.momentum_engine import *
-from engines.macro_engine import *
-from engines.strategy_engine import *
-from engines.montecarlo_engine import *
-from engines.confidence_engine import *
-from engines.execution_engine import *
-from engines.anomaly_engine import *
-from engines.learning_engine import *
-from engines.memory_engine import *
-from engines.portfolio_engine import *
-from engines.gpt_engine import *
+from engines.regime_engine import detect_regime
+from engines.structure_engine import detect_structure
+from engines.liquidity_engine import analyze_liquidity
+from engines.volatility_engine import analyze_volatility
+from engines.momentum_engine import analyze_momentum
+from engines.macro_engine import analyze_macro
+from engines.strategy_engine import select_strategy
+from engines.montecarlo_engine import run_montecarlo
+from engines.confidence_engine import calculate_confidence
+from engines.execution_engine import execution_quality
+from engines.anomaly_engine import detect_anomaly
+from engines.learning_engine import learning_adjustment
+from engines.memory_engine import save_memory
+from engines.gpt_engine import generate_reasoning
 
-from services.telemetry_service import *
+from services.telemetry_service import broadcast_analysis
 
-app = FastAPI()
+app = FastAPI(
+    title="ALBI AI Engine",
+    version="1.0.0"
+)
+
 
 @app.get("/")
 async def root():
-
     return {
         "status": "ALBI AI ENGINE ONLINE"
     }
 
+
 @app.post("/analyze")
-async def analyze(
-    data: MarketData
-):
+async def analyze(data: MarketData):
 
-    regime = detect_regime(data)
+    try:
 
-    structure = detect_structure(data)
+        # ==========================
+        # MARKET ANALYSIS
+        # ==========================
 
-    liquidity = analyze_liquidity(data)
+        regime = detect_regime(data)
 
-    volatility = analyze_volatility(data)
+        structure = detect_structure(data)
 
-    momentum = analyze_momentum(data)
+        liquidity = analyze_liquidity(data)
 
-    macro_bias = analyze_macro()
+        volatility = analyze_volatility(data)
 
-    strategy = select_strategy(
-        regime,
-        volatility,
-        momentum
-    )
+        momentum = analyze_momentum(data)
 
-    montecarlo = run_montecarlo()
+        macro_bias = analyze_macro()
 
-    confidence = calculate_confidence(
-        regime,
-        momentum,
-        liquidity,
-        volatility,
-        montecarlo,
-        macro_bias
-    )
+        strategy = select_strategy(
+            regime,
+            volatility,
+            momentum
+        )
 
-    confidence = learning_adjustment(
-        confidence
-    )
+        # ==========================
+        # MONTE CARLO
+        # ==========================
 
-    anomaly = detect_anomaly(
-        volatility,
-        liquidity
-    )
+        montecarlo = run_montecarlo()
 
-    execution_quality_state = execution_quality(data)
+        # ==========================
+        # CONFIDENCE ENGINE
+        # ==========================
 
-    if (
-        regime == "TRENDING_BULLISH"
-        and momentum == "BULLISH"
-    ):
-        signal = "BUY"
+        confidence = calculate_confidence(
+            regime,
+            momentum,
+            liquidity,
+            volatility,
+            montecarlo,
+            macro_bias
+        )
 
-    elif (
-        regime == "TRENDING_BEARISH"
-        and momentum == "BEARISH"
-    ):
-        signal = "SELL"
+        confidence = learning_adjustment(
+            confidence
+        )
 
-    else:
-        signal = "NO_TRADE"
+        # ==========================
+        # SAFETY CHECKS
+        # ==========================
 
-    approved = (
-        confidence >= 80
-        and not anomaly
-        and execution_quality_state
-        != "BAD"
-    )
+        anomaly = detect_anomaly(
+            volatility,
+            liquidity
+        )
 
-    uncertainty = round(
-        100 - confidence,
-        2
-    )
+        execution_quality_state = execution_quality(
+            data
+        )
 
-    reasoning = generate_reasoning(
-        data,
-        signal,
-        confidence
-    )
+        # ==========================
+        # SIGNAL ENGINE
+        # ==========================
 
-    response = {
-        "approved":
-        approved,
+        if (
+            regime == "TRENDING_BULLISH"
+            and momentum == "BULLISH"
+        ):
+            signal = "BUY"
 
-        "signal":
-        signal,
+        elif (
+            regime == "TRENDING_BEARISH"
+            and momentum == "BEARISH"
+        ):
+            signal = "SELL"
 
-        "confidence":
-        confidence,
+        else:
+            signal = "NO_TRADE"
 
-        "uncertainty":
-        uncertainty,
+        # ==========================
+        # APPROVAL ENGINE
+        # ==========================
 
-        "strategy":
-        strategy,
+        approved = (
+            confidence >= 80
+            and not anomaly
+            and execution_quality_state != "BAD"
+        )
 
-        "regime":
-        regime,
+        uncertainty = round(
+            100 - confidence,
+            2
+        )
 
-        "market_structure":
-        structure,
+        # ==========================
+        # REASONING ENGINE
+        # ==========================
 
-        "liquidity_state":
-        liquidity,
+        reasoning = generate_reasoning(
+            data,
+            signal,
+            confidence
+        )
 
-        "macro_bias":
-        macro_bias,
+        # ==========================
+        # RESPONSE
+        # ==========================
 
-        "execution_quality":
-        execution_quality_state,
+        response = {
+            "approved": approved,
+            "signal": signal,
+            "confidence": confidence,
+            "uncertainty": uncertainty,
+            "strategy": strategy,
+            "regime": regime,
+            "market_structure": structure,
+            "liquidity_state": liquidity,
+            "macro_bias": macro_bias,
+            "execution_quality": execution_quality_state,
+            "tail_risk": "LOW",
+            "risk_of_ruin": montecarlo.get(
+                "risk_of_ruin",
+                0
+            ),
+            "expected_drawdown": montecarlo.get(
+                "expected_drawdown",
+                0
+            ),
+            "expected_winrate": montecarlo.get(
+                "expected_winrate",
+                0
+            ),
+            "reasoning": reasoning,
+            "warnings": []
+        }
 
-        "tail_risk":
-        "LOW",
+        # ==========================
+        # MEMORY
+        # ==========================
 
-        "risk_of_ruin":
-        montecarlo[
-            "risk_of_ruin"
-        ],
+        save_memory(response)
 
-        "expected_drawdown":
-        montecarlo[
-            "expected_drawdown"
-        ],
+        # ==========================
+        # WEBSOCKET
+        # ==========================
 
-        "expected_winrate":
-        montecarlo[
-            "expected_winrate"
-        ],
+        try:
+            broadcast_analysis(response)
+        except Exception:
+            pass
 
-        "reasoning":
-        reasoning,
+        return response
 
-        "warnings": []
-    }
+    except Exception as e:
 
-    save_memory(response)
-
-    broadcast_analysis(
-        response
-    )
-
-    return response
+        raise HTTPException(
+            status_code=500,
+            detail=f"AI Engine Error: {str(e)}"
+        )

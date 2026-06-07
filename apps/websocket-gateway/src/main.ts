@@ -27,6 +27,6 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(4000, () => {
-  console.log("Websocket Gateway running on port 4000");
+server.listen(4001, () => {
+  console.log("Websocket Gateway running on port 4001");
 });

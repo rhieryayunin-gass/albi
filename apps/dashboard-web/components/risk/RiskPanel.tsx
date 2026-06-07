@@ -164,11 +164,15 @@ export default function RiskPanel() {
   );
 }
 
+interface RowProps {
+  label: string;
+  value?: string | number | null;
+}
+
 function Row({
   label,
   value,
-}: any) {
-
+}: RowProps): React.JSX.Element {
   return (
     <div
       className="
