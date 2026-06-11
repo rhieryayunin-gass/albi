@@ -105,7 +105,7 @@ Provide:
 4. Probability TP 1500 is reached
 5. Final conclusion
 
-Maximum 250 words.
+Maximum 50 words.
 Be concise.
 """
 
