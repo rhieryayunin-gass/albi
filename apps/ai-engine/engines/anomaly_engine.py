@@ -3,10 +3,30 @@ def detect_anomaly(
     liquidity
 ):
 
-    if (
-        volatility == "EXTREME"
-        and liquidity == "THIN"
-    ):
-        return True
+    anomaly_score = 0
 
-    return False
+    # ==========================
+    # VOLATILITY
+    # ==========================
+
+    if volatility == "EXTREME":
+        anomaly_score += 2
+
+    elif volatility == "HIGH":
+        anomaly_score += 1
+
+    # ==========================
+    # LIQUIDITY
+    # ==========================
+
+    if liquidity == "THIN":
+        anomaly_score += 2
+
+    elif liquidity == "LOW":
+        anomaly_score += 1
+
+    # ==========================
+    # FINAL DECISION
+    # ==========================
+
+    return anomaly_score >= 2

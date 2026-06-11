@@ -4,19 +4,57 @@ def select_strategy(
     momentum
 ):
 
+    # ==========================
+    # HIGH VOLATILITY
+    # ==========================
+
+    if volatility == "EXTREME":
+        return "DEFENSIVE"
+
+    # ==========================
+    # STRONG BULLISH TREND
+    # ==========================
+
     if (
         regime == "TRENDING_BULLISH"
         and momentum == "BULLISH"
     ):
-        return "BREAKOUT"
+
+        if volatility == "HIGH":
+            return "BREAKOUT"
+
+        return "CONTINUATION"
+
+    # ==========================
+    # STRONG BEARISH TREND
+    # ==========================
 
     if (
         regime == "TRENDING_BEARISH"
         and momentum == "BEARISH"
     ):
+
+        if volatility == "HIGH":
+            return "BREAKDOWN"
+
         return "CONTINUATION"
 
-    if volatility == "EXTREME":
-        return "DEFENSIVE"
+    # ==========================
+    # RANGING MARKET
+    # ==========================
 
-    return "SNIPER"
+    if regime == "RANGING":
+        return "SNIPER"
+
+    # ==========================
+    # LOW QUALITY MARKET
+    # ==========================
+
+    if momentum == "NEUTRAL":
+        return "WAIT"
+
+    # ==========================
+    # DEFAULT
+    # ==========================
+
+    return "WAIT"

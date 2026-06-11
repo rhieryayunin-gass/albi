@@ -1,9 +1,37 @@
 def analyze_volatility(data):
 
-    if data.atr > 60:
-        return "EXTREME"
+    atr = data.atr
 
-    if data.atr > 35:
+    # ==========================
+    # VERY LOW VOLATILITY
+    # ==========================
+
+    if atr < 8:
+        return "DEAD"
+
+    # ==========================
+    # LOW VOLATILITY
+    # ==========================
+
+    if atr < 15:
+        return "LOW"
+
+    # ==========================
+    # HEALTHY VOLATILITY
+    # ==========================
+
+    if atr < 30:
+        return "NORMAL"
+
+    # ==========================
+    # STRONG TRENDING MARKET
+    # ==========================
+
+    if atr < 50:
         return "HIGH"
 
-    return "NORMAL"
+    # ==========================
+    # CHAOTIC MARKET
+    # ==========================
+
+    return "EXTREME"

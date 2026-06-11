@@ -1,9 +1,30 @@
 def analyze_liquidity(data):
 
-    if data.spread > 50:
+    spread = data.spread
+
+    # ==========================
+    # VERY THIN
+    # ==========================
+
+    if spread >= 60:
         return "THIN"
 
-    if data.spread < 20:
-        return "HEALTHY"
+    # ==========================
+    # LOW LIQUIDITY
+    # ==========================
 
-    return "NORMAL"
+    if spread >= 35:
+        return "LOW"
+
+    # ==========================
+    # NORMAL
+    # ==========================
+
+    if spread >= 20:
+        return "NORMAL"
+
+    # ==========================
+    # HEALTHY
+    # ==========================
+
+    return "HEALTHY"

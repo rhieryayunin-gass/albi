@@ -57,7 +57,10 @@ async def analyze(data: MarketData):
 
         print("========== ALBI DEBUG ==========")
         print("REGIME:", regime)
+        print("STRUCTURE:", structure)
         print("MOMENTUM:", momentum)
+        print("LIQUIDITY:", liquidity)
+        print("VOLATILITY:", volatility)
         print("ATR:", data.atr)
         print("RSI:", data.rsi)
         print("EMA20:", data.ema20)
@@ -110,23 +113,39 @@ async def analyze(data: MarketData):
         )
 
         # ==========================
-        # SIGNAL ENGINE
+        # TP FEASIBILITY ENGINE
         # ==========================
+
+        tp_feasible = False
+
+        if data.atr >= 15:
+            tp_feasible = True
+
+        # ==========================
+        # SIGNAL ENGINE V2
+        # ==========================
+
+        signal = "NO_TRADE"
 
         if (
             regime == "TRENDING_BULLISH"
+            and structure in ["HH_HL", "BULLISH"]
             and momentum == "BULLISH"
+            and liquidity in ["HEALTHY", "NORMAL"]
+            and volatility in ["NORMAL", "HIGH"]
+            and confidence >= 85
         ):
             signal = "BUY"
 
         elif (
             regime == "TRENDING_BEARISH"
+            and structure in ["LH_LL", "BEARISH"]
             and momentum == "BEARISH"
+            and liquidity in ["HEALTHY", "NORMAL"]
+            and volatility != "EXTREME"
+            and confidence >= 85
         ):
             signal = "SELL"
-
-        else:
-            signal = "NO_TRADE"
 
         # ==========================
         # APPROVAL ENGINE
@@ -134,9 +153,10 @@ async def analyze(data: MarketData):
 
         approved = (
             signal != "NO_TRADE"
-            and confidence >= 80
+            and confidence >= 90
+            and tp_feasible
             and not anomaly
-            and execution_quality_state != "BAD"
+            and execution_quality_state == "GOOD"
         )
 
         uncertainty = round(
@@ -169,6 +189,7 @@ async def analyze(data: MarketData):
             "liquidity_state": liquidity,
             "macro_bias": macro_bias,
             "execution_quality": execution_quality_state,
+            "tp_feasible": tp_feasible,
             "tail_risk": "LOW",
             "risk_of_ruin": montecarlo.get(
                 "risk_of_ruin",
@@ -198,8 +219,11 @@ async def analyze(data: MarketData):
 
         try:
             broadcast_analysis(response)
-        except Exception:
-            pass
+        except Exception as e:
+            print(
+                "WEBSOCKET ERROR:",
+                str(e)
+            )
 
         return response
 

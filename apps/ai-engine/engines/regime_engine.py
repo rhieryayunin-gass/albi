@@ -1,20 +1,27 @@
 def detect_regime(data):
 
-    if (
-        data.ema20 >
-        data.ema50 >
-        data.ema200
-    ):
+    ema20 = data.ema20_m15
+    ema50 = data.ema50_m15
+    ema200 = data.ema200_h1
+
+    # ==========================
+    # STRONG TREND
+    # ==========================
+
+    if ema20 > ema50 > ema200:
         return "TRENDING_BULLISH"
 
-    if (
-        data.ema20 <
-        data.ema50 <
-        data.ema200
-    ):
+    if ema20 < ema50 < ema200:
         return "TRENDING_BEARISH"
 
-    if data.atr > 40:
-        return "VOLATILE"
+    # ==========================
+    # TRANSITION
+    # ==========================
+
+    if ema20 > ema50:
+        return "TRANSITION_BULLISH"
+
+    if ema20 < ema50:
+        return "TRANSITION_BEARISH"
 
     return "RANGING"
