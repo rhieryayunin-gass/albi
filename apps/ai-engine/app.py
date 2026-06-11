@@ -55,6 +55,16 @@ async def analyze(data: MarketData):
 
         momentum = analyze_momentum(data)
 
+        print("========== ALBI DEBUG ==========")
+        print("REGIME:", regime)
+        print("MOMENTUM:", momentum)
+        print("ATR:", data.atr)
+        print("RSI:", data.rsi)
+        print("EMA20:", data.ema20)
+        print("EMA50:", data.ema50)
+        print("EMA200:", data.ema200)
+        print("================================")
+
         macro_bias = analyze_macro()
 
         strategy = select_strategy(
@@ -123,7 +133,8 @@ async def analyze(data: MarketData):
         # ==========================
 
         approved = (
-            confidence >= 80
+            signal != "NO_TRADE"
+            and confidence >= 80
             and not anomaly
             and execution_quality_state != "BAD"
         )
