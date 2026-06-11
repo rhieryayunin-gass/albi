@@ -56,16 +56,26 @@ async def analyze(data: MarketData):
         momentum = analyze_momentum(data)
 
         print("========== ALBI DEBUG ==========")
+
         print("REGIME:", regime)
         print("STRUCTURE:", structure)
         print("MOMENTUM:", momentum)
         print("LIQUIDITY:", liquidity)
         print("VOLATILITY:", volatility)
-        print("ATR:", data.atr)
-        print("RSI:", data.rsi)
-        print("EMA20:", data.ema20)
-        print("EMA50:", data.ema50)
-        print("EMA200:", data.ema200)
+
+        print("RSI M5:", data.rsi_m5)
+        print("RSI M15:", data.rsi_m15)
+        print("RSI H1:", data.rsi_h1)
+        print("RSI H4:", data.rsi_h4)
+
+        print("ATR M15:", data.atr_m15)
+        print("ATR H1:", data.atr_h1)
+        print("ATR H4:", data.atr_h4)
+
+        print("EMA20 M15:", data.ema20_m15)
+        print("EMA50 M15:", data.ema50_m15)
+        print("EMA200 H1:", data.ema200_h1)
+
         print("================================")
 
         macro_bias = analyze_macro()
