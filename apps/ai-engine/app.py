@@ -181,7 +181,16 @@ async def analyze(data: MarketData):
         reasoning = generate_reasoning(
             data,
             signal,
-            confidence
+            confidence,
+            regime,
+            structure,
+            momentum,
+            liquidity,
+            volatility,
+            macro_bias,
+            strategy,
+            execution_quality_state,
+            tp_feasible
         )
 
         # ==========================
