@@ -143,7 +143,7 @@ async def analyze(data: MarketData):
             and momentum == "BULLISH"
             and liquidity in ["HEALTHY", "NORMAL"]
             and volatility in ["NORMAL", "HIGH"]
-            and confidence >= 85
+            and confidence >= 65
         ):
             signal = "BUY"
 
@@ -153,7 +153,7 @@ async def analyze(data: MarketData):
             and momentum == "BEARISH"
             and liquidity in ["HEALTHY", "NORMAL"]
             and volatility != "EXTREME"
-            and confidence >= 85
+            and confidence >= 65
         ):
             signal = "SELL"
 
@@ -163,7 +163,7 @@ async def analyze(data: MarketData):
 
         approved = (
             signal != "NO_TRADE"
-            and confidence >= 90
+            and confidence >= 65
             and tp_feasible
             and not anomaly
             and execution_quality_state == "GOOD"

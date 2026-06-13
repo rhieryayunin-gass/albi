@@ -80,10 +80,10 @@ export class RiskEngineService {
       data.openPositions
     );
 
-    if(data.confidence >= 90)
+    if(data.confidence >= 80)
       score += 10;
 
-    if(data.confidence < 70)
+    if(data.confidence < 60)
       score -= 20;
 
     if(data.uncertainty > 40)
