@@ -129,7 +129,7 @@ async def analyze(data: MarketData):
 
         tp_feasible = False
 
-        if data.atr >= 15:
+        if data.atr >= 8:
             tp_feasible = True
 
         # ==========================
