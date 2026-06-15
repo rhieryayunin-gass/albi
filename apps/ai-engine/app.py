@@ -98,6 +98,7 @@ async def analyze(data: MarketData):
 
         confidence = calculate_confidence(
             regime,
+            structure,
             momentum,
             liquidity,
             volatility,
